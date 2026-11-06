@@ -217,15 +217,36 @@ body.dragging{-webkit-user-select:none;user-select:none;cursor:grabbing}
 .toast button{border:0;background:transparent;color:inherit;font-weight:700;text-decoration:underline}
 footer{max-width:1240px;margin:8px auto 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));font-size:.8rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 16px}
 footer button{border:0;background:transparent;color:var(--muted);text-decoration:underline;padding:0}
+/* stage: the sing-with-chords screen */
+body.staged{overflow:hidden}
+.sing-btn{border:1.5px solid var(--danger);color:var(--danger);background:var(--surface);border-radius:999px;padding:7px 13px;min-height:36px;font-weight:700;font-size:.88rem;display:inline-flex;align-items:center;gap:7px}
+.rec-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--danger);flex:none}
+.stage{position:fixed;inset:0;z-index:60;background:var(--bg);display:grid;grid-template-rows:auto minmax(0,1fr) auto;padding-top:env(safe-area-inset-top,0px)}
+.stage-head{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--surface);border-bottom:1px solid var(--line)}
+.sh-cell{display:grid;gap:2px;min-width:0;align-content:start}
+.sh-big{font-family:var(--f-display);font-weight:800;font-size:clamp(1.35rem,6.5vw,2.5rem);line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sh-big small{font-size:.5em;color:var(--muted);font-weight:600}
+.sh-sub{font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sh-sub b{color:var(--ink)}
+.sh-sub .yes{color:var(--good);font-weight:700}
+.stage-body{position:relative;min-height:0;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+#stageCv{display:block;width:100%;height:100%}
+.countin{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:min(32vw,9rem);color:var(--accent);pointer-events:none}
+.stage-msg{position:absolute;left:50%;top:12px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);background:var(--ink);color:var(--surface);border-radius:10px;padding:10px 14px;font-size:.88rem;text-align:center}
+.stage-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--surface);border-top:1px solid var(--line);padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.stage-foot .note{flex:1 1 180px;min-width:0}
+.play.recording{background:var(--danger);color:var(--surface)}
+.play:disabled,.btn:disabled{opacity:.45;cursor:not-allowed}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
 <header class="transport">
   <div class="t-inner">
-    <span class="brand">Song Builder <small style="font-family:var(--f-mono);font-size:.7rem;font-weight:500;color:var(--muted)">v1</small></span>
+    <span class="brand">Song Builder <small style="font-family:var(--f-mono);font-size:.7rem;font-weight:500;color:var(--muted)">v2</small></span>
     <button id="playBtn" class="play" aria-pressed="false"><span id="playIcon">▶</span><span id="playText">Play song</span></button>
     <button id="loopBtn" class="toggle" aria-pressed="true">Loop</button>
     <button id="clickBtn" class="toggle" aria-pressed="false">Click</button>
+    <button class="sing-btn" data-act="stage"><span class="rec-dot"></span>Sing with chords</button>
     <div class="tempo" role="group" aria-label="Tempo">
       <button id="tempoDown" aria-label="Slower">−</button>
       <output id="tempoOut">88</output><span class="unit">BPM</span>
@@ -284,7 +305,7 @@ footer button{border:0;background:transparent;color:var(--muted);text-decoration
       </section>
 
       <section class="panel" aria-labelledby="voiceH">
-        <div class="panel-head"><h2 id="voiceH">Your voice</h2><p>Record yourself singing in Voice Memos, then upload it. As it plays, this shows the note you are on and harmony notes that fit.</p></div>
+        <div class="panel-head"><h2 id="voiceH">Your voice</h2><p>Tap <b>Sing with chords</b> to record yourself over the song, or upload a Voice Memo. This shows the notes you sang and harmony notes that fit.</p></div>
         <div class="meter" aria-live="polite">
           <div class="big-note" id="bigNote">—</div>
           <div class="meter-side">
@@ -295,10 +316,10 @@ footer button{border:0;background:transparent;color:var(--muted);text-decoration
           <div class="meter-src" id="meterSrc"></div>
         </div>
         <div class="v-actions">
-          <label class="btn primary file-btn">Upload a recording<input type="file" id="fileIn" accept="audio/*,.m4a,.mp3,.wav,.aac"></label>
+          <button class="sing-btn" data-act="stage"><span class="rec-dot"></span>Sing with chords</button>
+          <label class="btn file-btn">Upload a recording<input type="file" id="fileIn" accept="audio/*,.m4a,.mp3,.wav,.aac"></label>
           <button class="btn" data-act="play-rec" id="playRecBtn">▶ Play example</button>
-          <button class="btn" data-act="play-rec-chords" id="playRecChordsBtn">▶ Play with chords</button>
-          <button class="btn" data-act="live" id="liveBtn">Try live mic</button>
+          <button class="btn" data-act="play-rec-chords" id="playRecChordsBtn">▶ Watch with chords</button>
         </div>
         <div class="progress" id="progress" hidden></div>
         <div class="chart-box">
@@ -324,6 +345,26 @@ footer button{border:0;background:transparent;color:var(--muted);text-decoration
 </main>
 <footer><span>Your song saves on this device.</span><button data-act="reset">Reset to the example song</button></footer>
 
+<div class="stage" id="stage" hidden role="dialog" aria-modal="true" aria-label="Sing with chords">
+  <div class="stage-head">
+    <div class="sh-cell"><span class="lbl">Part</span><span class="sh-big" id="shSec">—</span><span class="sh-sub" id="shBar"></span></div>
+    <div class="sh-cell"><span class="lbl">Chord now</span><span class="sh-big" id="shChord">—</span><span class="sh-sub" id="shNext"></span></div>
+    <div class="sh-cell"><span class="lbl">You're singing</span><span class="sh-big" id="shNote">—</span><span class="sh-sub" id="shFit"></span></div>
+  </div>
+  <div class="stage-body">
+    <canvas id="stageCv" aria-label="Your voice on a note chart, with the song's chords lined up underneath"></canvas>
+    <div class="countin" id="countIn" hidden></div>
+    <div class="stage-msg" id="stageMsg" hidden></div>
+  </div>
+  <div class="stage-foot">
+    <button class="play" id="stRec"><span class="rec-dot" style="background:currentColor"></span><span id="stRecText">Record with chords</span></button>
+    <button class="btn" id="stPlay">▶ Play take</button>
+    <button class="btn" id="stSave" hidden>Save take</button>
+    <button class="toggle" id="stCount" aria-pressed="true">Count-in</button>
+    <span class="note">Wear headphones so the chords don't leak into your mic. Colored stripes show notes that fit the chord.</span>
+    <button class="btn" id="stClose">Close</button>
+  </div>
+</div>
 <div class="tray" id="tray">
   <div class="tray-top" id="trayTop"></div>
   <div class="tray-chips" id="trayChips"></div>
@@ -772,8 +813,8 @@ function act(a){
     case 'copy': copyChart(); break;
     case 'use-key': if(voice.stats){ state.key={...voice.stats.key}; edited(); renderKeySel(); renderPalette(); drawChart(); toast(`Key set to ${keyName(state.key)}.`); } break;
     case 'play-rec': toggleRecording(false); break;
-    case 'play-rec-chords': toggleRecording(true); break;
-    case 'live': toggleLive(); break;
+    case 'play-rec-chords': openStage(); startStagePlayback(); break;
+    case 'stage': openStage(); break;
   }
 }
 document.addEventListener('change',e=>{
@@ -890,17 +931,31 @@ async function loadFile(file){
 function stopRecording(){ if(voice.rec){ try{ voice.rec.src.onended=null; voice.rec.src.stop(); }catch(e){} if(voice.rec.chords) stopPlay(); voice.rec=null; } voice.head=null; setRecBtns(); voice.dirty=true; }
 function toggleRecording(withChords){
   if(voice.rec){ const was=voice.rec.chords; stopRecording(); if(was===withChords) return; }
-  stopLive(); ensureCtx(); if(voice.source==='live'){ toast('Upload a recording first.'); return; }
+  stopLive(); ensureCtx();
+  if(voice.source!=='example'&&!voice.buffer){ toast('No audio to play for this one. Record or upload again.'); return; }
   const b=voice.buffer||exampleBuffer(), src=ctx.createBufferSource(); src.buffer=b; src.connect(master);
   const t=ctx.currentTime+0.1; src.start(t); voice.rec={src,t0:t,chords:withChords};
   src.onended=()=>{ if(voice.rec&&voice.rec.src===src) stopRecording(); };
   if(withChords) startPlay(null,t);
   setRecBtns();
 }
+const srcWord = () => ({example:'example',file:'recording',take:'take',live:'recording'}[voice.source]);
 function setRecBtns(){
-  const lbl=voice.source==='example'?'example':'recording';
-  $('#playRecBtn').textContent=voice.rec&&!voice.rec.chords?'■ Stop':`▶ Play ${lbl}`;
-  $('#playRecChordsBtn').textContent=voice.rec&&voice.rec.chords?'■ Stop':'▶ Play with chords';
+  $('#playRecBtn').textContent=voice.rec?'■ Stop':`▶ Play ${srcWord()}`;
+  $('#playRecBtn').disabled=voice.source==='take'&&!voice.buffer;
+}
+function trackAt(tr,t){ // nearest point at time t, or null
+  let lo=0, hi=tr.length-1; if(hi<0) return null;
+  while(lo<hi){ const mid=(lo+hi)>>1; if(tr[mid].t<t) lo=mid+1; else hi=mid; }
+  const p=tr[lo]; return p&&Math.abs(p.t-t)<0.12?p:null;
+}
+function pitchFromAnalyser(an,buf){
+  an.getFloatTimeDomainData(buf);
+  const f=Math.max(1,Math.round(ctx.sampleRate/12000)), ds=downsample(buf,f), dsr=ctx.sampleRate/f;
+  let s=0; for(let i=0;i<ds.length;i++) s+=ds[i]*ds[i];
+  if(Math.sqrt(s/ds.length)<=0.01) return null;
+  const fr=yin(ds,0,Math.min(512,ds.length>>1),dsr);
+  return fr&&fr>70&&fr<1100? 69+12*Math.log2(fr/440) : null;
 }
 async function toggleLive(){
   if(voice.live){ stopLive(); return; }
@@ -921,11 +976,7 @@ function stopLive(){
   voice.stats=computeStats(voice.track,voice.hop); renderVoice();
 }
 function liveStep(){
-  const L=voice.live, an=L.an; an.getFloatTimeDomainData(L.buf);
-  const f=Math.max(1,Math.round(ctx.sampleRate/12000)), ds=downsample(L.buf,f), dsr=ctx.sampleRate/f;
-  let s=0; for(let i=0;i<ds.length;i++) s+=ds[i]*ds[i]; const rms=Math.sqrt(s/ds.length);
-  let m=null; if(rms>0.01){ const fr=yin(ds,0,Math.min(512,ds.length>>1),dsr); if(fr&&fr>70&&fr<1100) m=69+12*Math.log2(fr/440); }
-  const t=ctx.currentTime-L.t0; voice.track.push({t,m}); voice.dur=Math.max(10,t);
+  const L=voice.live, m=pitchFromAnalyser(L.an,L.buf), t=ctx.currentTime-L.t0; voice.track.push({t,m}); voice.dur=Math.max(10,t);
   setMeter(m,'Live mic'); voice.dirty=true;
 }
 
@@ -972,7 +1023,7 @@ function drawChart(){
 }
 function renderVoiceStats(){
   const st=voice.stats;
-  $('#chartTag').textContent={example:'Example',file:'Your recording',live:'Live mic'}[voice.source];
+  $('#chartTag').textContent={example:'Example',file:'Your recording',live:'Live mic',take:'Your take'}[voice.source];
   $('#chartTag').hidden=false;
   if(!st){ $('#vRange').textContent='—'; $('#vRangeSub').textContent='Upload a recording to see this.'; $('#vKey').textContent='—'; $('#useKeyBtn').disabled=true; $('#vTop').innerHTML=''; $('#vHarm').innerHTML=''; return; }
   const span=st.hi-st.lo;
@@ -992,12 +1043,217 @@ function frame(){
   if(ctx){
     while(uiQueue.length&&uiQueue[0].t<=ctx.currentTime) setNow(uiQueue.shift());
     if(voice.rec){ const el=ctx.currentTime-voice.rec.t0;
-      if(el>=0){ voice.head=el; const p=voice.track[Math.min(voice.track.length-1,Math.floor(el/voice.hop))];
-        setMeter(p?p.m:null,voice.source==='example'?'Example recording':'Your recording'); voice.dirty=true; } }
+      if(el>=0){ voice.head=el; const p=trackAt(voice.track,el);
+        setMeter(p?p.m:null,{example:'Example recording',file:'Your recording',take:'Your take'}[voice.source]); voice.dirty=true; } }
     if(voice.live) liveStep();
+    if(stage.mode==='rec'){
+      if(stage.an){ const m=pitchFromAnalyser(stage.an,stage.abuf); stage.live.push({t:ctx.currentTime-stage.T0,m}); if(m!=null) growRange(m); }
+      if(!play&&ctx.currentTime>stage.T0+0.3) finishStageRecord();
+    }
   }
+  if(stage.open) drawStage();
   if(voice.dirty){ voice.dirty=false; drawChart(); }
   requestAnimationFrame(frame);
+}
+
+/* ---------- sing-with-chords stage ---------- */
+const stage={open:false,mode:null,T0:null,bd:2,seq:[],loop:false,off:0,lo:52,hi:70,mic:null,an:null,abuf:null,rec:null,chunks:[],live:[],src:null,wake:null,countIn:true,msgT:null,head:{}};
+function timelineAt(i){ const n=stage.seq.length; if(!n||i<0) return null; if(i<n) return stage.seq[i]; return stage.loop?stage.seq[i%n]:null; }
+function openStage(){
+  stopPlay(); stopRecording(); stopLive();
+  stage.open=true; $('#stage').hidden=false; document.body.classList.add('staged');
+  stage.seq=buildSeq(null); stage.bd=barDur(); stage.loop=state.loop; stage.mode=null; stage.T0=null;
+  stage.off=voice.source==='take'?(voice.offset||0):0;
+  fitStageRange(); updStageButtons(); stageMsg('');
+}
+function closeStage(){ stopStage(); stage.open=false; $('#stage').hidden=true; document.body.classList.remove('staged'); setNow(null); }
+function fitStageRange(){
+  const st=voice.stats;
+  if(st){ stage.lo=st.lo-3; stage.hi=st.hi+3; }
+  else { const b=48+state.key.tonic+(state.key.tonic<4?12:0); stage.lo=b-3; stage.hi=b+15; }
+  if(stage.hi-stage.lo<14){ const c=(stage.hi+stage.lo)/2; stage.lo=Math.floor(c-7); stage.hi=stage.lo+14; }
+}
+function growRange(m){ if(m<stage.lo+1) stage.lo=Math.floor(m)-2; if(m>stage.hi-1) stage.hi=Math.ceil(m)+2; }
+function stageMsg(text,ms){
+  const el=$('#stageMsg'); clearTimeout(stage.msgT);
+  if(!text){ el.hidden=true; return; } el.textContent=text; el.hidden=false;
+  if(ms) stage.msgT=setTimeout(()=>el.hidden=true,ms);
+}
+async function wakeLock(on){ try{ if(on&&navigator.wakeLock) stage.wake=await navigator.wakeLock.request('screen'); else if(!on&&stage.wake){ await stage.wake.release(); stage.wake=null; } }catch(e){} }
+async function startStageRecord(){
+  ensureCtx(); stopStage();
+  stage.seq=buildSeq(null);
+  if(!stage.seq.some(b=>b.chord)){ stageMsg('Add some chords to your song first.',3000); return; }
+  stage.bd=barDur(); stage.loop=state.loop; stage.live=[]; stage.chunks=[];
+  $('#stRec').disabled=true;
+  let stream=null;
+  try{ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia) throw new Error('no mic');
+    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:false,autoGainControl:false}});
+  }catch(e){ stream=null; }
+  $('#stRec').disabled=false;
+  if(!stage.open){ if(stream) stream.getTracks().forEach(t=>t.stop()); return; }
+  ensureCtx();
+  if(stream){
+    stage.mic=stream; stage.an=ctx.createAnalyser(); stage.an.fftSize=4096; stage.abuf=new Float32Array(4096);
+    ctx.createMediaStreamSource(stream).connect(stage.an);
+    if(window.MediaRecorder){
+      const type=['audio/mp4','audio/webm;codecs=opus','audio/webm'].find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t));
+      try{ stage.rec=new MediaRecorder(stream,type?{mimeType:type}:undefined); stage.rec.ondataavailable=e=>{ if(e.data&&e.data.size) stage.chunks.push(e.data); }; stage.rec.start(); }
+      catch(e){ stage.rec=null; }
+    }
+    stageMsg('');
+  } else stageMsg("The mic is blocked on this page, so this is sing-along only. Open your GitHub link in Safari to record.",7000);
+  const recStart=ctx.currentTime, ci=stage.countIn?stage.bd:0;
+  stage.T0=ctx.currentTime+0.25+ci; stage.off=stage.T0-recStart;
+  if(ci) for(let i=0;i<4;i++) clickAt(stage.T0-ci+i*ci/4,i===0);
+  startPlay(null,stage.T0);
+  stage.mode='rec'; updStageButtons(); wakeLock(true);
+}
+function finishStageRecord(){
+  if(stage.mode!=='rec') return;
+  stage.mode=null; stopPlay(); wakeLock(false);
+  const mic=stage.mic, rec=stage.rec, chunks=stage.chunks, off=stage.off;
+  stage.mic=null; stage.an=null; stage.rec=null;
+  const done=()=>{ if(mic) mic.getTracks().forEach(t=>t.stop()); renderVoice(); updStageButtons(); };
+  if(!mic){ stage.T0=null; done(); return; }
+  const track=cleanTrack(stage.live.filter(p=>p.t>-0.3).map(p=>({t:p.t+off,m:p.m})));
+  const hop=track.length>1?(track[track.length-1].t-track[0].t)/track.length:1/60;
+  Object.assign(voice,{source:'take',track,hop,offset:off,dur:track.length?track[track.length-1].t:1,buffer:null,takeBlob:null,stats:computeStats(track,hop)});
+  stage.off=off; stage.T0=null;
+  if(rec&&rec.state!=='inactive'){
+    rec.onstop=async()=>{
+      const blob=new Blob(chunks,{type:rec.mimeType||'audio/mp4'}); voice.takeBlob=blob;
+      try{ const ab=await blob.arrayBuffer(); voice.buffer=await new Promise((res,rej)=>{ const p=ctx.decodeAudioData(ab,res,rej); if(p&&p.then) p.then(res,rej); }); voice.dur=voice.buffer.duration; }
+      catch(e){ voice.buffer=null; }
+      done(); if(stage.open) stageMsg(voice.buffer?'Got it! Tap "Play take" to hear it with the chords.':'Saved your notes, but this browser could not keep the audio.',4000);
+    };
+    rec.stop();
+  } else done();
+}
+function startStagePlayback(){
+  ensureCtx(); stopStage();
+  const b=voice.buffer||(voice.source==='example'?exampleBuffer():null);
+  if(!b){ stageMsg('Record a take first.',3000); return; }
+  stage.seq=buildSeq(null); stage.bd=barDur(); stage.loop=state.loop;
+  stage.off=voice.source==='take'?(voice.offset||0):0;
+  fitStageRange();
+  const src=ctx.createBufferSource(); src.buffer=b; src.connect(master);
+  const P=ctx.currentTime+0.15; src.start(P); stage.src=src; stage.T0=P+stage.off;
+  if(stage.seq.length) startPlay(null,stage.T0);
+  src.onended=()=>{ if(stage.src===src){ stage.src=null; stage.mode=null; stopPlay(); updStageButtons(); } };
+  stage.mode='play'; updStageButtons();
+}
+function stopStage(){
+  if(stage.mode==='rec') finishStageRecord();
+  else if(stage.mode==='play'){ const s=stage.src; stage.src=null; stage.mode=null; try{ s.onended=null; s.stop(); }catch(e){} stopPlay(); stage.T0=null; }
+  updStageButtons();
+}
+function updStageButtons(){
+  const rec=stage.mode==='rec', pl=stage.mode==='play';
+  $('#stRec').classList.toggle('recording',rec); $('#stRecText').textContent=rec?'Stop':'Record with chords';
+  $('#stRec').disabled=pl;
+  const canPlay=!!voice.buffer||voice.source==='example';
+  $('#stPlay').textContent=pl?'■ Stop':`▶ Play ${srcWord()}`; $('#stPlay').disabled=rec||!canPlay;
+  $('#stSave').hidden=!voice.takeBlob||rec;
+  $('#stCount').setAttribute('aria-pressed',stage.countIn);
+}
+function saveTake(){
+  const b=voice.takeBlob; if(!b) return;
+  const ext=/webm/.test(b.type)?'webm':'m4a', d=new Date(), p=n=>String(n).padStart(2,'0');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+  a.download=`song-take-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.${ext}`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),30000);
+}
+$('#stRec').addEventListener('click',()=>{ if(stage.mode==='rec') stopStage(); else startStageRecord(); });
+$('#stPlay').addEventListener('click',()=>{ if(stage.mode==='play') stopStage(); else startStagePlayback(); });
+$('#stSave').addEventListener('click',saveTake);
+$('#stCount').addEventListener('click',()=>{ stage.countIn=!stage.countIn; updStageButtons(); });
+$('#stClose').addEventListener('click',closeStage);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&stage.open) closeStage(); });
+
+function setText(id,html){ if(stage.head[id]!==html){ stage.head[id]=html; document.getElementById(id).innerHTML=html; } }
+function stageNow(){ return (stage.T0!=null&&ctx)? ctx.currentTime-stage.T0 : 0; }
+function stageNote(now){
+  if(stage.mode==='rec'){ const p=stage.live[stage.live.length-1]; return p&&now-p.t<0.15?p.m:null; }
+  if(stage.mode==='play'){ const p=trackAt(voice.track,now+stage.off); return p?p.m:null; }
+  return null;
+}
+function rr(g,x,y,w,h,r){ g.beginPath(); if(g.roundRect) g.roundRect(x,y,w,h,r); else g.rect(x,y,w,h); }
+function drawStage(){
+  const cv=$('#stageCv'), box=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1, W=box.width, H=box.height;
+  if(!W||!H) return;
+  if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){ cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); }
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  const cs=getComputedStyle(document.documentElement), C=v=>cs.getPropertyValue(v).trim();
+  const ink=C('--ink'), muted=C('--muted'), acc=C('--accent'), s2=C('--surface-2'), line=C('--line'), surf=C('--surface');
+  const secCol=t=>C('--c-'+secColor(t));
+  const now=stageNow(), bd=stage.bd, laneH=Math.min(124,Math.max(92,H*0.3)), gap=10, pH=H-laneH-gap;
+  const playX=Math.round(W*0.3), pps=W/(Math.max(4,Math.min(6,W/110))*bd);
+  const X=t=>playX+(t-now)*pps, tMin=now-playX/pps, tMax=now+(W-playX)/pps;
+  const lo=stage.lo, hi=stage.hi, rows=hi-lo+1, rh=(pH-8)/rows, Y=m=>4+(hi-m)*rh+rh/2, rowTop=m=>4+(hi-m)*rh;
+  const sc=scaleOf(state.key);
+  // note rows in the key
+  for(let m=lo;m<=hi;m++){ if(sc.includes(((m%12)+12)%12)){ g.fillStyle=s2; g.fillRect(0,rowTop(m),W,rh); } }
+  // chord-tone stripes per bar
+  const i0=Math.max(0,Math.floor(tMin/bd)), i1=Math.ceil(tMax/bd);
+  for(let i=i0;i<=i1;i++){
+    const it=timelineAt(i); if(!it) continue; const x1=X(i*bd), x2=X((i+1)*bd);
+    g.strokeStyle=line; g.lineWidth=1; g.beginPath(); g.moveTo(x1+0.5,0); g.lineTo(x1+0.5,pH); g.stroke();
+    const c=parseChord(it.chord); if(!c) continue; const sec=secById(it.sec), col=secCol(sec?sec.type:'Verse');
+    for(let m=lo;m<=hi;m++){ const pc=((m%12)+12)%12; if(!c.pcs.includes(pc)) continue;
+      g.globalAlpha=pc===c.root?0.34:0.2; g.fillStyle=col; g.fillRect(x1,rowTop(m)+1,x2-x1,rh-2); }
+    g.globalAlpha=1;
+  }
+  // note labels
+  g.font='10px "DM Mono", ui-monospace, monospace'; g.textBaseline='middle'; g.textAlign='left';
+  if(rh>=9) for(let m=lo;m<=hi;m++){ const pc=((m%12)+12)%12; if(!sc.includes(pc)) continue; g.fillStyle=pc===state.key.tonic?ink:muted; g.fillText(noteName(m),6,Y(m)); }
+  // the voice line
+  const pts=stage.mode==='rec'?stage.live:voice.track, off=stage.mode==='rec'?0:stage.off;
+  if(pts.length){
+    let k=0, a=0, b=pts.length-1; while(a<b){ const mid=(a+b)>>1; if(pts[mid].t-off<tMin) a=mid+1; else b=mid; } k=a;
+    g.strokeStyle=acc; g.lineWidth=3.5; g.lineJoin='round'; g.lineCap='round'; g.beginPath(); let prev=null;
+    for(;k<pts.length;k++){ const p=pts[k], t=p.t-off; if(t>tMax) break; if(stage.mode==='play'&&t>now) break;
+      if(p.m==null){ prev=null; continue; } const x=X(t), y=Y(p.m);
+      if(prev&&t-prev.t<0.15&&Math.abs(p.m-prev.m)<2) g.lineTo(x,y); else g.moveTo(x,y); prev={t,m:p.m}; }
+    g.stroke();
+  }
+  // playhead + current note
+  g.strokeStyle=ink; g.globalAlpha=0.6; g.lineWidth=2; g.beginPath(); g.moveTo(playX,0); g.lineTo(playX,H); g.stroke(); g.globalAlpha=1;
+  const nm=stageNote(now);
+  if(nm!=null){ const y=Y(nm); g.fillStyle=acc; g.beginPath(); g.arc(playX,y,8,0,Math.PI*2); g.fill();
+    g.font='700 13px "Atkinson Hyperlegible", system-ui, sans-serif'; g.fillStyle=ink; g.fillText(noteName(nm),playX+13,y); }
+  // chord lane
+  const lt=pH+gap, labH=18;
+  g.fillStyle=surf; g.fillRect(0,lt-4,W,laneH+4);
+  g.strokeStyle=line; g.beginPath(); g.moveTo(0,lt-4.5); g.lineTo(W,lt-4.5); g.stroke();
+  const cur=Math.floor(now/bd);
+  for(let i=i0;i<=i1;i++){
+    const it=timelineAt(i); if(!it) continue; const sec=secById(it.sec), col=secCol(sec?sec.type:'Verse');
+    const x1=X(i*bd)+2, x2=X((i+1)*bd)-2, y1=lt+labH+2, h=laneH-labH-10;
+    if(it.idx===0||i===i0){ g.font='800 12px "Bricolage Grotesque", system-ui, sans-serif'; g.fillStyle=col; g.textAlign='left'; g.textBaseline='middle';
+      g.fillText(sec?sectionLabel(sec):'',Math.max(x1,4),lt+labH/2); }
+    const isCur=i===cur&&now>=0, past=i<cur;
+    g.globalAlpha=isCur?0.3:past?0.08:0.15; g.fillStyle=col; rr(g,x1,y1,x2-x1,h,9); g.fill(); g.globalAlpha=1;
+    if(isCur){ const f=Math.min(1,(now-i*bd)/bd); g.globalAlpha=0.25; g.fillStyle=col; rr(g,x1,y1,(x2-x1)*f,h,9); g.fill(); g.globalAlpha=1;
+      g.strokeStyle=col; g.lineWidth=2.5; rr(g,x1,y1,x2-x1,h,9); g.stroke(); }
+    g.font=`800 ${isCur?26:21}px "Bricolage Grotesque", system-ui, sans-serif`; g.textAlign='center'; g.textBaseline='middle';
+    g.fillStyle=past?muted:ink; g.fillText(it.chord||'—',(x1+x2)/2,y1+h/2);
+    g.textAlign='left';
+  }
+  // header text
+  const ci=$('#countIn');
+  if(stage.mode==='rec'&&now<0){ ci.hidden=false; ci.textContent=String(Math.min(4,Math.ceil(-now/(bd/4)))); } else ci.hidden=true;
+  const it=timelineAt(Math.max(0,cur)), nx=timelineAt(Math.max(0,cur)+1), sec=it&&secById(it.sec);
+  if(it&&sec){
+    setText('shSec',`<span style="color:var(--c-${secColor(sec.type)})">${esc(sectionLabel(sec))}</span>`);
+    setText('shBar',now<0?'<b>Get ready…</b>':stage.mode?`bar ${it.idx+1} of ${sec.bars.length}`:'Tap record to start');
+    setText('shChord',it.chord?chordHtml(it.chord):'—');
+    setText('shNext',nx?`next: <b>${esc(nx.chord||'rest')}</b>`:'next: end');
+  } else { setText('shSec','—'); setText('shBar',stage.mode?'':'Add chords first'); setText('shChord','—'); setText('shNext',''); }
+  if(nm!=null){ const r=Math.round(nm); setText('shNote',`${esc(spell(r%12))}<small>${Math.floor(r/12)-1}</small>`);
+    const c=it&&parseChord(it.chord), fits=c&&c.pcs.includes(((r%12)+12)%12);
+    setText('shFit',c?(fits?'<span class="yes">fits the chord ✓</span>':'passing note'):''); }
+  else { setText('shNote','—'); setText('shFit',stage.mode==='rec'&&stage.an?'(quiet)':''); }
 }
 
 /* ---------- boot ---------- */

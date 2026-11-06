@@ -8,3 +8,4 @@ Open it: https://sergio-i1.github.io/song-builder/
 
 Each version keeps its own link, so older ones never change:
 - **v1** (Nov 2026): first version: https://sergio-i1.github.io/song-builder/v1/
+- **v2** (Nov 2026): adds the Sing with chords screen (record over the song; voice chart on top, chords lined up underneath): https://sergio-i1.github.io/song-builder/v2/
