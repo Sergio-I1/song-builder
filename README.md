@@ -5,4 +5,6 @@ Drag-and-drop song sketchpad: arrange song parts, pick chords (in-key, any chord
 Open it: https://sergio-i1.github.io/song-builder/
 
 ## Versions
-- **v1** (Nov 2026): first version.
+
+Each version keeps its own link, so older ones never change:
+- **v1** (Nov 2026): first version: https://sergio-i1.github.io/song-builder/v1/
