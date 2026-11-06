@@ -19,5 +19,7 @@ An AI professor that teaches any lecture back to you like a video call. Paste no
 
 Open it: https://sergio-i1.github.io/song-builder/lecture-room/
 
+- Pick from five teachers: Prof. Maya (American woman), Prof. Marcus (American man), Prof. Eleanor (British woman), Prof. James (British man) and Prof. Priya (Indian English woman). They pause naturally between ideas, and their faces move as they talk.
+- On the GitHub page you can turn on Studio voice in Settings: a much more human-sounding AI voice that runs in your browser for free (one-time ~90 MB download; best on a computer).
 - The demo works right away. To teach your own lectures on the GitHub page, add your own Anthropic API key in Settings (saved only in your browser).
 - The Claude version uses your Claude account instead, no key needed (private link, only Sergio can open it unless shared): https://claude.ai/artifact/BtA2tgs9NvjuwwX1DMpKBe

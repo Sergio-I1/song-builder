@@ -125,12 +125,46 @@ select,input[type=text],input[type=password]{background:var(--bg);border:1px sol
 .board g[data-step].on{opacity:1}
 
 /* ---------- Avatar ---------- */
-.av .mouth,.av .eyes{transform-box:fill-box;transform-origin:center}
-.av .eyes{animation:blink 5.5s infinite}
-.speaking .av .mouth{animation:talk .17s ease-in-out infinite alternate}
+.av .mouth{transform-box:fill-box;transform-origin:center;transition:transform .07s linear}
+.av .eyes ellipse{transform-box:fill-box;transform-origin:center;animation:blink 5.5s infinite}
+.av .eyes ellipse:last-child{animation-delay:.02s}
+.av .eyes,.av .brows{transition:transform .25s ease}
+.av .head{transform-box:view-box;transform-origin:60px 88px}
+.speaking .av .head{animation:nod 3.4s ease-in-out infinite}
+.flap .av .mouth,.tcard.playing .av .mouth,.mini-tile .av .mouth{animation:talk .17s ease-in-out infinite alternate}
+.brows-up .av .brows{transform:translateY(-2.2px)}
+.look .av .eyes{transform:translate(-1.8px,-.8px)}
+.thinking .av .eyes{transform:translate(1.2px,-1.6px)}
+.thinking .av .head{transform:rotate(-3deg)}
 @keyframes talk{to{transform:scaleY(3.3)}}
 @keyframes blink{0%,95%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
-.thinking .av .eyes{transform:translateY(-2px)}
+@keyframes nod{0%,100%{transform:rotate(0)}22%{transform:rotate(1.6deg) translateY(-.4px)}48%{transform:rotate(-1deg)}74%{transform:rotate(.9deg) translateY(.4px)}}
+
+/* ---------- Teacher picker ---------- */
+.teachers-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.teachers h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:22px}
+.teachers .hint{color:var(--muted);font-size:14px}
+.trow{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(128px,1fr);gap:10px;overflow-x:auto;padding:2px 2px 6px;scroll-snap-type:x proximity}
+.tcard{scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:12px 8px;text-align:center;transition:border-color .15s,background .15s}
+.tcard:hover{border-color:#3B4459}
+.tcard .head{width:84px;height:84px;border-radius:50%;background:linear-gradient(160deg,#2A3150,#151925);overflow:hidden;position:relative;margin-bottom:4px}
+.tcard .head .av{position:absolute;left:50%;bottom:-8px;width:104px;height:104px;transform:translateX(-50%)}
+.tcard strong{font-size:15px}
+.tcard span{font-size:13px;color:var(--muted)}
+.tcard[aria-checked="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.tcard.playing .head{box-shadow:0 0 0 3px var(--good)}
+.voice-note{margin:10px 0 0;color:var(--muted);font-size:14px}
+.voice-note b{color:var(--ink)}
+.engines{display:flex;flex-direction:column;gap:8px}
+.engine{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;font-weight:400}
+.engine input{margin-top:3px;accent-color:var(--accent);width:18px;height:18px;flex:none}
+.engine strong{display:block}
+.engine small{color:var(--muted);font-size:13.5px;display:block}
+.engine.disabled{opacity:.55;cursor:not-allowed}
+.studio-bar{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.studio-bar .bar{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.studio-bar b{display:block;height:100%;width:0;background:var(--good);transition:width .3s}
+.tile .name .badge{color:var(--hl)}
 
 /* ---------- Call ---------- */
 .call{position:fixed;inset:0;display:flex;flex-direction:column;background:#0A0C11;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);z-index:5}
@@ -282,7 +316,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <section class="hero">
     <p class="eyebrow">Your own professor, on call</p>
     <h1>Turn any lecture into a <span class="scrawl">live class.</span></h1>
-    <p class="lede">Paste notes, a transcript, or upload slides. Prof. Lumen teaches it back in plain words, draws on a whiteboard while talking, and stops every couple of minutes to ask if you have questions.</p>
+    <p class="lede">Paste notes, a transcript, or upload slides. Your teacher explains it back in plain words, draws on a whiteboard while talking, and stops every couple of minutes to ask if you have questions.</p>
+  </section>
+
+  <section class="teachers" aria-labelledby="tTitle">
+    <div class="teachers-head"><h2 id="tTitle">Pick your teacher</h2><span class="hint">Tap one to hear their voice</span></div>
+    <div class="trow" id="teacherRow" role="radiogroup" aria-labelledby="tTitle"></div>
+    <p class="voice-note" id="voiceNote"></p>
   </section>
 
   <div class="lobby-grid">
@@ -291,13 +331,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <div class="mini-top"><span class="rec"><i></i>REC</span><span class="grow">Demo class</span><span class="mono">Part 1 of 3</span></div>
         <div class="mini-stage">
           <svg class="board" id="previewBoard" viewBox="0 0 800 450"></svg>
-          <div class="mini-tile speaking" id="previewTile"></div>
+          <div class="mini-tile" id="previewTile"></div>
         </div>
         <div class="mini-cap">A nine volt battery is like a ladder <mark>nine</mark> steps tall.</div>
       </div>
       <div class="demo-body">
         <h2 id="demoTitle">Try it: Voltage, current and resistance</h2>
-        <p>Three short parts built on the ladder picture, about four minutes. Prof. Lumen checks in after each part, and you can raise your hand any time.</p>
+        <p>Three short parts built on the ladder picture, about four minutes. <span class="tname">Your teacher</span> checks in after each part, and you can raise your hand any time.</p>
         <button class="btn primary" id="joinDemo" type="button"><svg class="i"><use href="#i-play"/></svg>Join the demo class</button>
       </div>
     </section>
@@ -329,7 +369,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <button class="btn primary big" id="startBtn" type="button">Start my class</button>
       <div class="prep" id="prep" hidden>
         <div class="prep-av thinking" id="prepAv"></div>
-        <div class="txt"><strong id="prepTitle">Prof. Lumen is reading your lecture…</strong><span id="prepSub">This usually takes under a minute.</span></div>
+        <div class="txt"><strong id="prepTitle">Reading your lecture…</strong><span id="prepSub">This usually takes under a minute.</span></div>
         <button class="btn ghost" id="prepStop" type="button">Stop</button>
       </div>
       <p class="form-err" id="formErr" hidden></p>
@@ -361,7 +401,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     </div>
     <aside class="side">
       <div class="tiles">
-        <div class="tile prof" id="profTile"><span class="name">Prof. Lumen</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+        <div class="tile prof" id="profTile"><span class="name"><span class="tname">Teacher</span><span class="badge" id="voiceBadge"></span></span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
         <div class="tile you" id="youTile"><div class="you-face"><span>You</span></div><span class="name" id="youName">You</span><span class="hand-badge" id="handBadge" hidden><svg class="i"><use href="#i-hand"/></svg>Hand up</span></div>
       </div>
       <div class="chat"><h3>Questions</h3><div class="chat-log" id="chatLog"></div></div>
@@ -369,13 +409,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
   <div class="caption">
     <div class="cap-box" aria-live="polite">
-      <span class="who" id="capWho">Prof. Lumen</span>
+      <span class="who" id="capWho">Teacher</span>
       <p class="line" id="capLine"></p>
     </div>
     <div class="actions" id="actions"></div>
   </div>
   <form class="askbar" id="askForm" autocomplete="off">
-    <input id="askInput" type="text" placeholder="Ask Prof. Lumen anything…" aria-label="Your question">
+    <input id="askInput" type="text" placeholder="Ask your teacher anything…" aria-label="Your question">
     <button type="button" class="roundbtn" id="micBtn" hidden aria-label="Speak your question"><svg class="i"><use href="#i-mic"/></svg></button>
     <button type="submit" class="roundbtn send" aria-label="Send question"><svg class="i"><use href="#i-send"/></svg></button>
   </form>
@@ -394,9 +434,20 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="sheet-head"><h2 id="setTitle">Settings</h2><button class="roundbtn" type="button" data-close aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
     <div class="sheet-body">
       <div class="field">
+        <label for="sTeacher">Teacher</label>
+        <select id="sTeacher"></select>
+      </div>
+      <div class="field">
         <span class="lbl">Voice</span>
         <label class="check" for="sVoiceOn"><input type="checkbox" id="sVoiceOn" checked> Read the class out loud</label>
-        <select id="sVoice" aria-label="Voice"></select>
+        <div class="engines">
+          <label class="engine" id="eDeviceRow" for="eDevice"><input type="radio" name="engine" id="eDevice" value="device"><span><strong>Device voice</strong><small>Built into your phone or computer. Works everywhere and starts right away.</small></span></label>
+          <label class="engine" id="eStudioRow" for="eStudio"><input type="radio" name="engine" id="eStudio" value="studio"><span><strong>Studio voice (most realistic)</strong><small id="studioNote">A human-sounding AI voice that runs inside your browser for free. One-time download of about 90 MB. Best on a computer; it can lag on phones.</small></span></label>
+        </div>
+        <div class="studio-bar" id="studioBar" hidden><div class="bar"><b id="studioFill"></b></div><span id="studioText"></span></div>
+        <label for="sVoice">Device voice for this teacher</label>
+        <select id="sVoice"></select>
+        <p class="help" id="voiceTip"></p>
         <div class="row"><button class="btn" type="button" id="sTest">Hear the voice</button></div>
       </div>
       <div class="field">
@@ -464,27 +515,96 @@ const CLAUDE_URL = 'https://claude.ai/artifact/BtA2tgs9NvjuwwX1DMpKBe';
 
 /* ================= Settings ================= */
 const Settings = Object.assign({
-  voiceOn: true, voiceURI: '', rate: 1, checkins: 'each', level: 'new',
+  voiceOn: true, rate: 1, checkins: 'each', level: 'new', teacher: 'maya', engine: 'device', voiceFor: {},
   apiKey: '', model: 'claude-sonnet-5-5'
 }, store.get('lectureRoom.settings', {}));
 const saveSettings = () => store.set('lectureRoom.settings', Settings);
 
-/* ================= Avatar ================= */
-const AVATAR = `<svg class="av" viewBox="0 0 120 120" aria-hidden="true">
-  <path d="M14 120c4-25 23-35 46-35s42 10 46 35z" fill="#3D4C74"/>
-  <path d="M47 86l13 17 13-17z" fill="#F3F1EA"/>
-  <path d="M57 90l3 15 3-15z" fill="#C2413B"/>
-  <rect x="52" y="70" width="16" height="18" rx="6" fill="#B07A52"/>
-  <ellipse cx="36" cy="55" rx="4" ry="6" fill="#C08A60"/><ellipse cx="84" cy="55" rx="4" ry="6" fill="#C08A60"/>
-  <ellipse cx="60" cy="52" rx="24" ry="28" fill="#C99268"/>
-  <path d="M35 52c-3-21 9-33 25-33 17 0 28 12 25 31-2-8-7-13-12-15-9 5-22 8-38 17z" fill="#2E2A33"/>
-  <path d="M36 44c1-4 3-7 6-9" stroke="#8A8794" stroke-width="2" fill="none" stroke-linecap="round"/>
-  <g class="eyes"><circle cx="50" cy="55" r="2.6" fill="#1B1B22"/><circle cx="70" cy="55" r="2.6" fill="#1B1B22"/></g>
-  <g fill="none" stroke="#1B1B22" stroke-width="2"><circle cx="50" cy="55" r="8"/><circle cx="70" cy="55" r="8"/><path d="M58 55h4"/></g>
-  <path d="M43 43q7-4 13 0M64 43q7-4 13 0" stroke="#2E2A33" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-  <ellipse class="mouth" cx="60" cy="70" rx="6" ry="1.8" fill="#6E2B2B"/>
+/* ================= Teachers ================= */
+const FEMALE = [/Samantha/,/\bAva\b/,/Allison/,/Susan/,/\bZoe/,/Joelle/,/Noelle/,/Nicky/,/Kathy/,/Victoria/,/Vicki/,/Aria\b/,/Jenny/,/Michelle/,/\bAna\b/,/Emma/,/Serena/,/\bKate\b/,/Stephanie/,/Martha/,/Sonia/,/Libby/,/Maisie/,/Hazel/,/Karen/,/Catherine/,/Moira/,/Tessa/,/Fiona/,/\bIsha/,/Veena/,/Neerja/,/Heera/,/Female/,/Natasha/,/Clara/,/Emily/,/Molly/,/\bSara/,/Shelley/,/Sandy/,/Flo\b/,/Ava\b/];
+const MALE = [/\bAlex\b/,/\bTom\b/,/Evan/,/Nathan/,/Aaron/,/\bFred/,/Daniel/,/Oliver/,/Arthur/,/Jamie/,/Rishi/,/\bLee\b/,/Gordon/,/\bGuy\b/,/Andrew/,/Christopher/,/Davis/,/Brian/,/\bEric\b/,/Roger/,/Steffan/,/\bRyan/,/Thomas/,/George/,/\bMale\b/,/Prabhat/,/William/,/Connor/,/Mitchell/,/\bLiam/,/Ralph/,/Reed/,/Rocko/,/Eddy/,/Albert/,/Bruce/,/Junior/];
+const TEACHERS = [
+  { id: 'maya', name: 'Maya', accent: 'American', who: 'woman', kokoro: 'af_heart', lang: /en[-_]US/i,
+    names: [/\bAva\b/, /\bZoe/, /Samantha/, /Allison/, /Aria\b/, /Jenny/, /Michelle/, /Susan/, /Joelle/, /Google US English/], avoid: MALE,
+    look: { skin: '#C99268', hair: '#3A2620', style: 'long', glasses: false, top: '#2E6E69', tie: false } },
+  { id: 'marcus', name: 'Marcus', accent: 'American', who: 'man', kokoro: 'am_michael', lang: /en[-_]US/i,
+    names: [/Evan/, /Nathan/, /\bTom\b/, /Aaron/, /Andrew/, /\bGuy\b/, /Christopher/, /Davis/, /Brian/, /\bAlex\b/, /\bFred/], avoid: FEMALE.concat([/Google US English/]),
+    look: { skin: '#7A4E33', hair: '#141214', style: 'short', glasses: true, top: '#3D4C74', tie: true } },
+  { id: 'eleanor', name: 'Eleanor', accent: 'British', who: 'woman', kokoro: 'bf_emma', lang: /en[-_]GB/i,
+    names: [/Serena/, /\bKate\b/, /Stephanie/, /Martha/, /Sonia/, /Libby/, /Maisie/, /Hazel/, /Google UK English Female/], avoid: MALE,
+    look: { skin: '#EDC7AA', hair: '#A8652F', style: 'bun', glasses: true, top: '#6B3E66', tie: false } },
+  { id: 'james', name: 'James', accent: 'British', who: 'man', kokoro: 'bm_george', lang: /en[-_]GB/i,
+    names: [/Jamie/, /Daniel/, /Arthur/, /Oliver/, /\bRyan/, /Thomas/, /George/, /Google UK English Male/], avoid: FEMALE,
+    look: { skin: '#E2B48F', hair: '#5B4636', style: 'side', glasses: false, top: '#2F3B52', tie: true } },
+  { id: 'priya', name: 'Priya', accent: 'Indian', who: 'woman', kokoro: null, lang: /en[-_]IN/i,
+    names: [/\bIsha/, /Veena/, /Neerja/, /Heera/, /Sangeeta/, /Kajal/, /India/], avoid: MALE,
+    look: { skin: '#A86F4C', hair: '#17110F', style: 'center', glasses: false, top: '#9A3F2C', tie: false } }
+];
+TEACHERS.forEach(t => { t.full = 'Prof. ' + t.name; });
+const T = () => TEACHERS.find(t => t.id === Settings.teacher) || TEACHERS[0];
+
+function shade(hex, pct){
+  const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  const f = c => Math.max(0, Math.min(255, Math.round(c + (pct < 0 ? c : 255 - c) * pct / 100)));
+  return '#' + [f(r), f(g), f(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+function avatarSVG(t){
+  const L = t.look, sk = L.skin, sh = shade(sk, -14), hr = L.hair;
+  const longBack = `<path d="M33 52 C29 21 91 21 87 52 L92 101 C80 109 40 109 28 101 Z" fill="${hr}"/>`;
+  const back = { long: longBack, center: longBack, bun: `<circle cx="60" cy="21" r="10.5" fill="${hr}"/>` }[L.style] || '';
+  const front = {
+    long: `<path d="M36 51 C34 27 48 21 61 21 C76 22 86 31 84 51 C79 39 69 33 57 33 C48 35 41 41 36 51 Z" fill="${hr}"/>`,
+    center: `<path d="M36 53 C35 27 48 21 60 22 C72 21 85 27 84 53 C80 36 69 30 60 27 C51 30 40 36 36 53 Z" fill="${hr}"/>`,
+    bun: `<path d="M36 47 C35 27 48 21 60 21 C73 21 85 28 84 47 C79 36 70 31 60 31 C50 31 41 36 36 47 Z" fill="${hr}"/>`,
+    short: `<path d="M37 45 C36 26 49 20 60 20 C73 20 85 27 83 45 C80 35 71 30 60 30 C49 30 40 35 37 45 Z" fill="${hr}"/>`,
+    side: `<path d="M36 48 C34 27 48 19 63 20 C78 21 87 31 84 47 C79 36 70 30 54 32 C47 34 40 40 36 48 Z" fill="${hr}"/><path d="M54 32 C60 26 70 24 78 27" stroke="${shade(hr, -30)}" stroke-width="1.4" fill="none"/>`
+  }[L.style];
+  const specs = L.glasses ? `<g fill="none" stroke="#1B1B22" stroke-width="1.8"><rect x="42" y="48" width="15" height="11" rx="4"/><rect x="63" y="48" width="15" height="11" rx="4"/><path d="M57 53h6M42 52l-5-1M78 52l5-1"/></g>` : '';
+  const neckline = L.tie
+    ? `<path d="M47 87l13 15 13-15" fill="#F1EEE6"/><path d="M57.5 90l2.5 14 2.5-14z" fill="${shade(L.top, 35)}"/>`
+    : `<path d="M48 86 Q60 100 72 86" fill="${shade(sk, -6)}"/><path d="M48 86 Q60 100 72 86" fill="none" stroke="${shade(L.top, 25)}" stroke-width="2"/>`;
+  return `<svg class="av" viewBox="0 0 120 120" aria-hidden="true">
+  ${back}
+  <path d="M12 121c3-25 23-35 48-35s45 10 48 35z" fill="${L.top}"/>
+  ${neckline}
+  <rect x="52" y="69" width="16" height="18" rx="7" fill="${sh}"/>
+  <g class="head">
+    <ellipse cx="37" cy="55" rx="3.8" ry="5.8" fill="${sh}"/><ellipse cx="83" cy="55" rx="3.8" ry="5.8" fill="${sh}"/>
+    <ellipse cx="60" cy="52" rx="23" ry="27" fill="${sk}"/>
+    ${front}
+    <g class="brows"><path d="M44 45q6-3 12 0M64 45q6-3 12 0" stroke="${shade(hr, -15)}" stroke-width="2.3" fill="none" stroke-linecap="round"/></g>
+    <g class="eyes"><ellipse cx="50" cy="54" rx="2.3" ry="2.7" fill="#1B1B22"/><ellipse cx="70" cy="54" rx="2.3" ry="2.7" fill="#1B1B22"/></g>
+    ${specs}
+    <path d="M60 57 q-2.4 6 1 7" stroke="${shade(sk, -32)}" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="46" cy="64" rx="4" ry="2" fill="#E07A6A" opacity=".2"/><ellipse cx="74" cy="64" rx="4" ry="2" fill="#E07A6A" opacity=".2"/>
+    <ellipse class="mouth" cx="60" cy="71" rx="5.6" ry="1.7" fill="#6A2B2B"/>
+  </g>
 </svg>`;
-['profTile','previewTile','prepAv'].forEach(id => $(id).insertAdjacentHTML('afterbegin', AVATAR));
+}
+function putAvatar(el, t){ const old = el.querySelector('.av'); if (old) old.remove(); el.insertAdjacentHTML('afterbegin', avatarSVG(t)); }
+function applyTeacher(){
+  const t = T();
+  ['profTile', 'previewTile', 'prepAv'].forEach(id => putAvatar($(id), t));
+  document.querySelectorAll('.tname').forEach(el => { el.textContent = t.full; });
+  $('askInput').placeholder = `Ask ${t.full} anything…`;
+  if (!$('call').hidden) $('capWho').textContent = $('capWho').textContent === 'You' || $('capWho').textContent === 'Notice' ? $('capWho').textContent : t.full;
+  renderTeachers(); renderVoiceUI();
+}
+function renderTeachers(){
+  const row = $('teacherRow'); if (!row) return;
+  if (!row.children.length){
+    for (const t of TEACHERS){
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'tcard'; b.setAttribute('role', 'radio'); b.dataset.id = t.id;
+      b.innerHTML = `<div class="head">${avatarSVG(t)}</div><strong>${esc(t.full)}</strong><span>${esc(t.accent)} · ${esc(t.who)}</span>`;
+      b.onclick = () => { Settings.teacher = t.id; saveSettings(); applyTeacher(); hearTeacher(t, b); };
+      row.appendChild(b);
+    }
+  }
+  [...row.children].forEach(b => b.setAttribute('aria-checked', String(b.dataset.id === Settings.teacher)));
+  const sel = $('sTeacher');
+  if (sel && !sel.options.length) for (const t of TEACHERS){ const o = document.createElement('option'); o.value = t.id; o.textContent = `${t.full} (${t.accent} ${t.who})`; sel.appendChild(o); }
+  if (sel) sel.value = Settings.teacher;
+}
 
 /* ================= Whiteboard ================= */
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -602,28 +722,69 @@ function revealAll(container){ container.querySelectorAll('[data-step]').forEach
 
 /* ================= Voice + captions ================= */
 const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
+// The studio voice model downloads from Hugging Face, which pages shown inside Claude are not allowed to reach.
+const STUDIO_OK = !window.claude;
+const UA = navigator.userAgent || '';
+const IS_IOS = /iPhone|iPad|iPod/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1);
+const IS_MAC = /Macintosh/.test(UA) && !IS_IOS;
+const IS_EDGE = /Edg\//.test(UA);
+const QUALITY = /premium|enhanced|natural|neural|online/i;
 let voices = [];
 function loadVoices(){
   if (!synth) return;
   try { voices = synth.getVoices().filter(v => /^en(-|_|$)/i.test(v.lang)); } catch(e){ voices = []; }
-  renderVoiceSelect();
+  renderVoiceUI();
 }
 if (synth){ loadVoices(); try { synth.addEventListener('voiceschanged', loadVoices); } catch(e){ synth.onvoiceschanged = loadVoices; } }
-function pickVoice(){
+function deviceVoiceFor(t){
   if (!voices.length) return null;
-  if (Settings.voiceURI){ const v = voices.find(v => v.voiceURI === Settings.voiceURI); if (v) return v; }
-  const prefs = [/natural/i, /premium|enhanced/i, /^Samantha/i, /Google US English/i, /Aria|Jenny|Guy|Ava|Andrew/i, /^Daniel/i, /^Karen/i];
-  for (const p of prefs){ const v = voices.find(v => p.test(v.name) && /en[-_]US|en[-_]GB/i.test(v.lang)); if (v) return v; }
-  return voices.find(v => /en[-_]US/i.test(v.lang)) || voices[0];
+  const ov = (Settings.voiceFor || {})[t.id];
+  if (ov){ const v = voices.find(v => v.voiceURI === ov); if (v) return v; }
+  let best = null, bestScore = -1e9;
+  for (const v of voices){
+    let sc = 0;
+    const ni = t.names.findIndex(re => re.test(v.name));
+    if (ni >= 0) sc += 100 - ni * 3;
+    if (t.lang.test(v.lang)) sc += 40;
+    if (QUALITY.test(v.name)) sc += 25;
+    if (t.avoid.some(re => re.test(v.name))) sc -= 90;
+    if (/en[-_]US/i.test(v.lang)) sc += 1;
+    if (sc > bestScore){ bestScore = sc; best = v; }
+  }
+  return best;
+}
+function voiceIsGoodMatch(t, v){ return !!v && t.lang.test(v.lang) && !t.avoid.some(re => re.test(v.name)); }
+
+/* ---- Pacing: split what the teacher says into sentences with natural pauses between them ---- */
+const plain = s => String(s || '').replace(/\s*\[(?:pause|beat)\]\s*/gi, ' ').replace(/\s+/g, ' ').trim();
+function planSpeech(raw){
+  const parts = String(raw || '').split(/\s*\[(?:pause|beat)\]\s*/i).map(x => x.trim()).filter(Boolean);
+  let clean = ''; const items = [];
+  parts.forEach((p, pi) => {
+    if (clean) clean += ' ';
+    const base = clean.length; clean += p;
+    const re = /(?:[^.!?]|\.(?=\d))+(?:[.!?]+["')\]]*|$)/g; let m; const sents = [];
+    while ((m = re.exec(p))){ if (!m[0]){ re.lastIndex++; continue; } sents.push({ s: m[0], i: m.index }); }
+    // Glue very short pieces (like "So.") onto the next sentence so the voice doesn't stutter.
+    for (let k = 0; k < sents.length - 1; k++){ if (words(sents[k].s) < 2){ sents[k + 1] = { s: sents[k].s + sents[k + 1].s, i: sents[k].i }; sents.splice(k, 1); k--; } }
+    sents.forEach((x, si) => {
+      const lead = x.s.length - x.s.trimStart().length; const t = x.s.trim(); if (!t) return;
+      let gap = /\?["')\]]*$/.test(t) ? 480 : /[!]["')\]]*$/.test(t) ? 330 : 300;
+      if (si === sents.length - 1 && pi < parts.length - 1) gap = 950;
+      items.push({ t, o: base + x.i + lead, gap });
+    });
+  });
+  return { clean, items };
 }
 
 let capSpans = [];
 function setCaption(text, who, notice){
-  $('capWho').textContent = who || 'Prof. Lumen';
+  $('capWho').textContent = who || T().full;
   const line = $('capLine');
   line.classList.toggle('notice', !!notice);
   line.replaceChildren();
   capSpans = [];
+  text = String(text || '');
   const re = /\S+/g; let m, last = 0;
   while ((m = re.exec(text))){
     if (m.index > last) line.appendChild(document.createTextNode(text.slice(last, m.index)));
@@ -647,74 +808,198 @@ function markWord(ci){
   if (cur){ const line = $('capLine'); const top = cur.offsetTop - line.offsetTop; if (top > line.scrollTop + line.clientHeight - 30 || top < line.scrollTop) line.scrollTop = Math.max(0, top - 10); }
 }
 function markWordIndex(i){ const sp = capSpans[i]; if (sp) markWord(+sp.dataset.s); }
+function wordIndexAt(o){ const i = capSpans.findIndex(sp => +sp.dataset.s >= o); return i < 0 ? 0 : i; }
 function finishCaption(){ capSpans.forEach(sp => { sp.classList.add('said'); sp.classList.remove('now'); }); }
 
-function splitChunks(text){
-  const out = []; const re = /[^.!?;:]+[.!?;:]*\s*/g; let m, buf = '', start = 0, pos = 0;
-  while ((m = re.exec(text))){
-    if (buf && (buf + m[0]).length > 180){ out.push({ t: buf, o: start }); start = pos; buf = ''; }
-    buf += m[0]; pos = m.index + m[0].length;
-  }
-  if (buf.trim()) out.push({ t: buf, o: start });
-  if (!out.length) out.push({ t: text, o: 0 });
+/* ---- Teacher face ---- */
+const tile = () => $('profTile');
+function speakingUI(on){ tile().classList.toggle('speaking', !!on); }
+function setMouth(v){ const m = tile().querySelector('.mouth'); if (m) m.style.transform = v > 0.06 ? `scaleY(${(1 + Math.min(1, v) * 3.1).toFixed(2)})` : ''; }
+let pulseT = 0;
+function mouthPulse(){ setMouth(0.55 + Math.random() * 0.45); clearTimeout(pulseT); pulseT = setTimeout(() => setMouth(0.12), 120); }
+function setFlap(on){ tile().classList.toggle('flap', !!on); }
+function tileClass(c, on){ tile().classList.toggle(c, !!on); }
+let glanceT = 0;
+function glance(){ tileClass('look', true); clearTimeout(glanceT); glanceT = setTimeout(() => tileClass('look', false), 1300); }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---- Studio voice: Kokoro, a small open AI voice model that runs in the browser ---- */
+const Studio = { tts: null, loading: null, pct: 0, state: 'off', cache: new Map(), queue: Promise.resolve(), el: null, stopCur: null };
+Studio.load = function(){
+  if (!STUDIO_OK) return Promise.reject(new Error('unavailable'));
+  if (Studio.tts) return Promise.resolve(Studio.tts);
+  if (Studio.loading) return Studio.loading;
+  Studio.state = 'loading'; Studio.pct = 0; renderVoiceUI();
+  const files = {};
+  Studio.loading = (async () => {
+    const mod = await import('https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js');
+    const tts = await mod.KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', {
+      dtype: 'q8', device: 'wasm',
+      progress_callback: p => {
+        if (!p || p.status !== 'progress' || !p.file) return;
+        files[p.file] = { l: p.loaded || 0, t: p.total || 0 };
+        let l = 0, tt = 0; for (const k in files){ l += files[k].l; tt += files[k].t; }
+        Studio.pct = tt ? Math.min(99, Math.round(l / tt * 100)) : 0; renderVoiceUI();
+      }
+    });
+    Studio.tts = tts; Studio.state = 'ready'; Studio.pct = 100; renderVoiceUI();
+    return tts;
+  })().catch(e => { Studio.loading = null; Studio.state = 'error'; renderVoiceUI(); throw e; });
+  return Studio.loading;
+};
+function wavURL(samples, sr){
+  const n = samples.length, buf = new ArrayBuffer(44 + n * 2), dv = new DataView(buf);
+  const w = (o, str) => { for (let i = 0; i < str.length; i++) dv.setUint8(o + i, str.charCodeAt(i)); };
+  w(0, 'RIFF'); dv.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+  dv.setUint32(24, sr, true); dv.setUint32(28, sr * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true); w(36, 'data'); dv.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++){ const x = Math.max(-1, Math.min(1, samples[i])); dv.setInt16(44 + i * 2, x < 0 ? x * 0x8000 : x * 0x7FFF, true); }
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+}
+function envelope(samples, sr){
+  const win = Math.max(1, Math.round(sr * 0.025)), out = new Float32Array(Math.ceil(samples.length / win)); let peak = 0;
+  for (let i = 0; i < out.length; i++){ let s2 = 0; const a = i * win, b = Math.min(samples.length, a + win); for (let j = a; j < b; j++) s2 += samples[j] * samples[j]; out[i] = Math.sqrt(s2 / Math.max(1, b - a)); if (out[i] > peak) peak = out[i]; }
+  if (peak > 0) for (let i = 0; i < out.length; i++) out[i] = Math.min(1, out[i] / (peak * 0.7));
   return out;
 }
-
-function speakingUI(on){ $('profTile').classList.toggle('speaking', !!on); }
-function stopVoice(){ if (synth){ try { synth.cancel(); } catch(e){} } speakingUI(false); }
-
-// Speak text with captions. Resolves when finished or when the class moves on (runId changes).
-function say(text, id, who){
-  text = String(text || '').trim();
-  setCaption(text, who);
-  if (!text) return Promise.resolve();
-  const alive = () => id === S.runId;
-  const useVoice = Settings.voiceOn && synth;
-  return new Promise(resolve => {
-    let finished = false;
-    const done = () => { if (finished) return; finished = true; speakingUI(false); if (alive()) finishCaption(); resolve(); };
-    speakingUI(true);
-    if (!useVoice){
-      // Timed captions when the voice is off or not available.
-      const per = 60000 / (175 * Settings.rate);
-      let i = 0; markWordIndex(0);
-      const t = setInterval(() => {
-        if (!alive()){ clearInterval(t); return done(); }
-        i++;
-        if (i >= capSpans.length){ clearInterval(t); setTimeout(done, 350); return; }
-        markWordIndex(i);
-      }, per);
-      return;
-    }
-    const chunks = splitChunks(text);
-    let k = 0;
-    const next = () => {
-      if (!alive() || k >= chunks.length) return done();
-      const c = chunks[k++];
-      const u = new SpeechSynthesisUtterance(c.t);
-      const v = pickVoice(); if (v) u.voice = v;
-      u.rate = Settings.rate; u.pitch = 1; u.lang = (v && v.lang) || 'en-US';
-      let ended = false, gotBoundary = false;
-      // Word highlight estimate, replaced by real word events when the voice sends them.
-      const cWords = (c.t.match(/\S+/g) || []).length;
-      const perWord = 60000 / (165 * Settings.rate);
-      let wi = 0; const firstIdx = Math.max(0, capSpans.findIndex(sp => +sp.dataset.s >= c.o));
-      const est = setInterval(() => { if (gotBoundary || !alive() || wi >= cWords) return clearInterval(est); markWordIndex(firstIdx + wi++); }, perWord);
-      const t0 = performance.now();
-      const end = () => {
-        if (ended) return; ended = true; clearTimeout(wd);
-        // Some devices report a voice but make no sound and finish instantly: keep the captions at talking pace.
-        const el = performance.now() - t0, full = cWords * perWord;
-        if (alive() && !gotBoundary && el < full * 0.35){ setTimeout(() => { clearInterval(est); next(); }, full - el); return; }
-        clearInterval(est); next();
-      };
-      u.onboundary = e => { if (e.name && e.name !== 'word') return; gotBoundary = true; markWord(c.o + e.charIndex); };
-      u.onend = end; u.onerror = end;
-      const wd = setTimeout(() => { try { synth.cancel(); } catch(e){} end(); }, (cWords * perWord) * 2.2 + 5000);
-      try { synth.speak(u); } catch(e){ end(); }
-    };
-    next();
+Studio.clip = function(text, voice){
+  const key = voice + '|' + Settings.rate + '|' + text;
+  if (Studio.cache.has(key)) return Studio.cache.get(key);
+  const p = Studio.queue.then(() => Studio.tts.generate(text, { voice, speed: Settings.rate })).then(raw => {
+    const sr = raw.sampling_rate || 24000, data = raw.audio;
+    return { url: wavURL(data, sr), env: envelope(data, sr), dur: data.length / sr };
   });
+  Studio.queue = p.catch(() => {});
+  Studio.cache.set(key, p);
+  if (Studio.cache.size > 90){ const k = Studio.cache.keys().next().value; const old = Studio.cache.get(k); Studio.cache.delete(k); old.then(c => setTimeout(() => URL.revokeObjectURL(c.url), 60000)).catch(() => {}); }
+  return p;
+};
+Studio.audio = function(){
+  if (!Studio.el){ Studio.el = new Audio(); Studio.el.setAttribute('playsinline', ''); Studio.el.preload = 'auto'; }
+  return Studio.el;
+};
+// Call inside a tap so phones allow sound later.
+Studio.unlock = function(){
+  try { const a = Studio.audio(); a.src = wavURL(new Float32Array(240), 24000); const pr = a.play(); if (pr && pr.catch) pr.catch(() => {}); } catch(e){}
+};
+Studio.play = function(clip, onTick){
+  return new Promise(res => {
+    const a = Studio.audio(); let raf = 0, done = false;
+    const fin = ok => { if (done) return; done = true; cancelAnimationFrame(raf); a.onended = a.onerror = null; Studio.stopCur = null; res(ok); };
+    Studio.stopCur = () => { try { a.pause(); } catch(e){} fin(true); };
+    a.onended = () => fin(true); a.onerror = () => fin(false);
+    a.src = clip.url;
+    const tick = () => { const tt = a.currentTime || 0; onTick(Math.min(1, tt / clip.dur), clip.env[Math.floor(tt / 0.025)] || 0); raf = requestAnimationFrame(tick); };
+    let pr; try { pr = a.play(); } catch(e){ return fin(false); }
+    if (pr && pr.then) pr.then(() => { raf = requestAnimationFrame(tick); }).catch(() => fin(false)); else raf = requestAnimationFrame(tick);
+  });
+};
+function engineFor(t){
+  if (!Settings.voiceOn) return 'timed';
+  if (Settings.engine === 'studio' && STUDIO_OK && t.kokoro && Studio.tts) return 'studio';
+  return synth ? 'device' : 'timed';
+}
+function prefetchSpeech(raw){
+  const t = T();
+  if (engineFor(t) !== 'studio') return;
+  for (const it of planSpeech(raw).items) Studio.clip(it.t, t.kokoro).catch(() => {});
+}
+function stopVoice(){
+  if (synth){ try { synth.cancel(); } catch(e){} }
+  if (Studio.stopCur) Studio.stopCur();
+  speakingUI(false); setMouth(0); setFlap(false); tileClass('brows-up', false);
+}
+
+/* ---- Speaking one sentence ---- */
+function timedSpeak(it, id){
+  return new Promise(resolve => {
+    const nW = Math.max(1, words(it.t)), per = 60000 / (175 * Settings.rate);
+    let i = 0; const first = wordIndexAt(it.o); markWordIndex(first); setFlap(true);
+    const t = setInterval(() => {
+      i++;
+      if (id !== S.runId || i >= nW){ clearInterval(t); setFlap(false); return resolve(); }
+      markWordIndex(first + i);
+    }, per);
+  });
+}
+function deviceSpeak(it, id, t){
+  return new Promise(resolve => {
+    const alive = () => id === S.runId;
+    const u = new SpeechSynthesisUtterance(it.t);
+    const v = deviceVoiceFor(t); if (v){ u.voice = v; u.lang = v.lang; } else u.lang = 'en-US';
+    u.rate = Settings.rate; u.pitch = 1;
+    const nW = Math.max(1, words(it.t)), perWord = 60000 / (165 * Settings.rate);
+    const first = wordIndexAt(it.o);
+    let ended = false, gotB = false, wi = 0;
+    setFlap(true);
+    const est = setInterval(() => { if (gotB || !alive() || wi >= nW) return clearInterval(est); markWordIndex(first + wi++); }, perWord);
+    const t0 = performance.now();
+    const end = () => {
+      if (ended) return; ended = true; clearTimeout(wd); setFlap(false); setMouth(0);
+      // Some devices report a voice but make no sound and finish instantly: keep the captions at talking pace.
+      const el = performance.now() - t0, full = nW * perWord;
+      if (alive() && !gotB && el < full * 0.35){ setFlap(true); setTimeout(() => { clearInterval(est); setFlap(false); resolve(); }, full - el); return; }
+      clearInterval(est); resolve();
+    };
+    u.onboundary = e => { if (e.name && e.name !== 'word') return; if (!gotB){ gotB = true; setFlap(false); } markWord(it.o + e.charIndex); mouthPulse(); };
+    u.onend = end; u.onerror = end;
+    const wd = setTimeout(() => { try { synth.cancel(); } catch(e){} end(); }, nW * perWord * 2.2 + 5000);
+    try { synth.speak(u); } catch(e){ end(); }
+  });
+}
+async function studioSpeak(it, id, t){
+  let clip;
+  try { clip = await Promise.race([Studio.clip(it.t, t.kokoro), sleep(20000).then(() => { throw new Error('slow'); })]); }
+  catch(e){ return synth ? deviceSpeak(it, id, t) : timedSpeak(it, id); }
+  if (id !== S.runId) return;
+  const len = it.t.length;
+  const ok = await Studio.play(clip, (frac, amp) => { if (id !== S.runId) return; setMouth(amp); markWord(Math.floor(it.o + frac * len)); });
+  setMouth(0);
+  if (!ok && id === S.runId) return synth ? deviceSpeak(it, id, t) : timedSpeak(it, id);
+}
+
+// Say a whole line with captions and natural pauses. Resolves when finished or when the class moves on (runId changes).
+async function say(raw, id, who){
+  const t = T();
+  const plan = planSpeech(raw);
+  setCaption(plan.clean, who || t.full);
+  if (!plan.items.length) return;
+  const alive = () => id === S.runId;
+  const eng = engineFor(t);
+  if (eng === 'studio') prefetchSpeech(raw);
+  speakingUI(true);
+  for (let k = 0; k < plan.items.length; k++){
+    if (!alive()) break;
+    const it = plan.items[k];
+    tileClass('brows-up', /\?["')\]]*$/.test(it.t));
+    if (eng === 'studio') await studioSpeak(it, id, t);
+    else if (eng === 'device') await deviceSpeak(it, id, t);
+    else await timedSpeak(it, id);
+    tileClass('brows-up', false);
+    if (!alive()) break;
+    if (k < plan.items.length - 1) await sleep(it.gap / Settings.rate);
+  }
+  if (alive()){ speakingUI(false); setMouth(0); finishCaption(); }
+}
+
+// Short voice sample for the teacher picker and the settings sheet.
+let previewToken = 0;
+async function hearTeacher(t, card){
+  if (!$('call').hidden && (S.phase === 'teaching' || S.phase === 'answering')) pauseClass();
+  stopVoice(); const my = ++previewToken;
+  document.querySelectorAll('.tcard.playing').forEach(c => c.classList.remove('playing'));
+  if (card) card.classList.add('playing');
+  const line = `Hi, I'm ${t.full}. I'll explain everything step by step, and stop to check in with you along the way.`;
+  const doneUI = () => { if (my === previewToken && card) card.classList.remove('playing'); };
+  if (!Settings.voiceOn){ setTimeout(doneUI, 1500); return; }
+  if (Settings.engine === 'studio' && STUDIO_OK && t.kokoro && Studio.tts){
+    Studio.unlock();
+    try { const c = await Studio.clip(line, t.kokoro); if (my === previewToken) await Studio.play(c, () => {}); } catch(e){}
+    return doneUI();
+  }
+  if (!synth) return doneUI();
+  const u = new SpeechSynthesisUtterance(line); const v = deviceVoiceFor(t); if (v){ u.voice = v; u.lang = v.lang; } u.rate = Settings.rate;
+  u.onend = u.onerror = doneUI;
+  try { synth.speak(u); } catch(e){ doneUI(); }
 }
 
 /* ================= AI connection ================= */
@@ -813,13 +1098,15 @@ function errText(e){
 const levelLine = lv => lv === 'some'
   ? 'The student already knows the basics of this subject, so you can move a little faster, but still keep words plain.'
   : 'The student is brand new to this topic. Assume no background at all.';
-const RULES = `You are Prof. Lumen, a warm, patient professor teaching ONE student live, like a small video call with a shared whiteboard.
+const rules = () => `You are ${T().full}, a warm, patient professor teaching ONE student live, like a small video call with a shared whiteboard.
 How you talk:
 - Plain, everyday words and short sentences. One idea at a time.
 - Give each new idea a simple real-life analogy, and define every technical word the first time you use it.
 - For math, go step by step and say every step in words the way you would read it aloud ("V equals I times R", "nine divided by three is three"). Never skip steps.
 - Write for the ear: no markdown, no lists, no emoji, no links, no symbols that are hard to read aloud. Say "ohms", "squared", "pi", "degrees".
 - Talk to the student as "you". Be encouraging but not gushy.
+- Sound like a real person talking, not a textbook: contractions, an occasional "okay", "so", "now" or "right?", and short questions you then answer. Don't overdo the fillers.
+- Mark natural pauses with [pause]: after an important idea, before revealing an answer, after a question you let sink in. About one [pause] every two or three sentences. Never start or end a "say" with [pause].
 - Stay faithful to the lecture material. Do not add facts it does not support, beyond simple background needed to understand it. If the material is unclear, say so plainly.`;
 const BOARD = `THE WHITEBOARD (field "svg"): an SVG drawing on a white board, 800 wide by 450 tall.
 - Write it as <svg viewBox='0 0 800 450'> ... </svg> and use single quotes for every attribute.
@@ -845,7 +1132,7 @@ function materialBlock(L){
 function planList(L){ return L.parts.map((p, i) => `${i + 1}. ${p.title}: ${p.goal || ''}`).join('\n'); }
 
 function outlinePrompt(text, nImages, needNotes, level){
-  return `${RULES}
+  return `${rules()}
 ${levelLine(level)}
 
 Here is the lecture material the student brought${nImages ? ` (${text ? 'plus' : 'in'} ${nImages} attached image${nImages > 1 ? 's' : ''} of slides or notes)` : ''}:
@@ -870,7 +1157,7 @@ ${BOARD}`;
 function partPrompt(L, i, log){
   const p = L.parts[i];
   const asked = log.filter(x => x.type === 'q').slice(-5).map(x => '- ' + x.text).join('\n');
-  return `${RULES}
+  return `${rules()}
 ${levelLine(Settings.level)}
 
 Lecture: "${L.title}".
@@ -893,9 +1180,9 @@ ${BOARD}`;
 }
 function answerPrompt(L, q, ctx){
   const p = L.parts[ctx.part];
-  const said = p && p.content ? p.content.beats.slice(0, Math.max(1, ctx.beat + 1)).map(b => b.say).join(' ') : '';
+  const said = p && p.content ? plain(p.content.beats.slice(0, Math.max(1, ctx.beat + 1)).map(b => b.say).join(' ')) : '';
   const recent = ctx.log.filter(x => x.type === 'q' || x.type === 'a').slice(-6).map(x => (x.type === 'q' ? 'Student: ' : 'You: ') + x.text).join('\n');
-  return `${RULES}
+  return `${rules()}
 ${levelLine(Settings.level)}
 
 Lecture: "${L.title}".
@@ -1077,7 +1364,7 @@ function renderChat(){
   for (const x of S.log){
     if (x.type !== 'q' && x.type !== 'a') continue;
     const d = document.createElement('div'); d.className = 'msg' + (x.type === 'q' ? ' me' : '');
-    d.innerHTML = `<b>${x.type === 'q' ? 'You' : 'Prof. Lumen'}</b><p></p>`; d.querySelector('p').textContent = x.text;
+    d.innerHTML = `<b>${x.type === 'q' ? 'You' : esc(T().full)}</b><p></p>`; d.querySelector('p').textContent = x.text;
     box.appendChild(d);
   }
   box.scrollTop = box.scrollHeight;
@@ -1099,12 +1386,20 @@ function ensurePart(i){
 function prefetch(i){ if (S.lesson && i < S.lesson.parts.length && !S.lesson.parts[i].content && AI.ready()) ensurePart(i).catch(() => {}); }
 
 /* ---------- Playing ---------- */
-async function playBeats(id, beats, from, onBeat){
+async function playBeats(id, beats, from, onBeat, tail){
   for (let b = from; b < beats.length; b++){
     if (id !== S.runId) return false;
     onBeat(b);
-    (beats[b].show || []).forEach(s => revealStep($('boardContent'), s, true));
+    if (b + 1 < beats.length) prefetchSpeech(beats[b + 1].say); else if (tail) prefetchSpeech(tail);
+    const show = beats[b].show || [];
+    if (show.length){
+      show.forEach(s => revealStep($('boardContent'), s, true));
+      glance(); await sleep(380);
+      if (id !== S.runId) return false;
+    }
     await say(beats[b].say, id);
+    if (id !== S.runId) return false;
+    if (b + 1 < beats.length) await sleep(560 / Settings.rate);
   }
   return id === S.runId;
 }
@@ -1116,7 +1411,7 @@ async function goPart(i, fromBeat = 0){
   if (!p.content){
     if (!AI.ready()){ showNotice(errText({ code: 'no_ai' }), [{ label: 'Open Settings', icon: 'gear', fn: openSettings }]); return; }
     setPhase('loading'); setThinking(true);
-    setCaption(`Getting part ${i + 1} ready: drawing the board and planning what to say…`, 'Prof. Lumen');
+    setCaption(`Getting part ${i + 1} ready: drawing the board and planning what to say…`);
     setBoardLabel('Part ' + (i + 1), p.title);
     try { await ensurePart(i); }
     catch(e){ if (id !== S.runId) return; setThinking(false); showNotice(errText(e), [{ label: 'Try again', go: true, icon: 'replay', fn: () => goPart(i, fromBeat) }, { label: 'Back to lobby', fn: leaveClass }]); return; }
@@ -1127,7 +1422,7 @@ async function goPart(i, fromBeat = 0){
   setPhase('teaching');
   if (!S.log.some(x => x.type === 'part' && x.i === i)){ S.log.push({ type: 'part', i }); }
   saveClass(); prefetch(i + 1);
-  const ok = await playBeats(id, p.content.beats, fromBeat, b => { S.beat = b; renderProgress(); saveClass(); });
+  const ok = await playBeats(id, p.content.beats, fromBeat, b => { S.beat = b; renderProgress(); saveClass(); }, Settings.checkins === 'off' ? '' : p.content.check);
   if (!ok) return;
   S.beat = p.content.beats.length; renderProgress(); saveClass();
   partDone(id);
@@ -1146,7 +1441,7 @@ function checkIn(id, line){
     { label: 'Say it simpler', icon: 'spark', fn: () => askProf('Can you explain that last part again in a simpler way, with a different everyday example?') },
     { label: 'Keep going', icon: 'next', go: true, fn: continueClass }
   ]);
-  say(line, id);
+  sleep(650).then(() => { if (id === S.runId) say(line, id); });
 }
 function continueClass(){
   const L = S.lesson; if (!L) return;
@@ -1164,7 +1459,7 @@ function finishClass(id){
     { label: 'Open notes', icon: 'notes', fn: openNotes },
     { label: 'Back to lobby', fn: leaveClass }
   ]);
-  say("That's the whole class. Nice work today. If anything is still fuzzy, ask me about it, or open your notes to review.", id);
+  sleep(600).then(() => { if (id === S.runId) say("And that's the whole class. [pause] Nice work today. If anything is still fuzzy, ask me about it, or open your notes to review.", id); });
 }
 function pauseClass(){
   ++S.runId; stopVoice(); setPhase('paused');
@@ -1188,7 +1483,7 @@ async function askProf(q){
   const id = ++S.runId; stopVoice();
   S.log.push({ type: 'q', text: q, part: S.part }); renderChat(); saveClass();
   if (!AI.ready()){
-    showNotice('To answer your own questions, Prof. Lumen needs the AI connected. Open Settings to add an API key' + (CLAUDE_URL ? ', or use the Claude version of this page.' : '.'), [{ label: 'Open Settings', icon: 'gear', fn: openSettings }, { label: 'Keep going', go: true, icon: 'next', fn: continueClass }]);
+    showNotice('To answer your own questions, your teacher needs the AI connected. Open Settings to add an API key' + (CLAUDE_URL ? ', or use the Claude version of this page.' : '.'), [{ label: 'Open Settings', icon: 'gear', fn: openSettings }, { label: 'Keep going', go: true, icon: 'next', fn: continueClass }]);
     return;
   }
   setPhase('thinking'); setThinking(true); setActions([]);
@@ -1209,13 +1504,13 @@ async function askProf(q){
   let ans;
   try { ans = normPart(o, 'Your question'); } catch(e){ return showNotice(errText(e), [{ label: 'Try again', go: true, icon: 'replay', fn: () => { S.log.pop(); askProf(q); } }, { label: 'Keep going', icon: 'next', fn: continueClass }]); }
   ans.followup = String((o && o.followup) || 'Does that make sense?');
-  S.log.push({ type: 'a', text: ans.beats.map(b => b.say).join(' '), part: S.part }); renderChat(); saveClass();
+  S.log.push({ type: 'a', text: plain(ans.beats.map(b => b.say).join(' ')), part: S.part }); renderChat(); saveClass();
   if (ans.svg && parseSvg(ans.svg)){
     drawSvgInto($('boardContent'), ans.svg);
     setBoardLabel('Your question', q, true); S.onAnswerBoard = true;
   }
   setPhase('answering');
-  const ok = await playBeats(id, ans.beats, 0, () => {});
+  const ok = await playBeats(id, ans.beats, 0, () => {}, ans.followup);
   if (!ok) return;
   afterAnswerMenu(id, false, ans.followup);
 }
@@ -1230,7 +1525,7 @@ function afterAnswerMenu(id, quiet, line){
   else acts.push({ label: 'Back to lobby', fn: leaveClass });
   setActions(acts);
   if (!quiet) say(line || 'Does that make sense?', id);
-  else setCaption('Okay, stopped. What would you like to do?', 'Prof. Lumen');
+  else setCaption('Okay, stopped. What would you like to do?');
 }
 
 /* ---------- Joining and leaving ---------- */
@@ -1242,6 +1537,7 @@ function startClock(){
 function warmVoice(){ if (synth && Settings.voiceOn){ try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch(e){} } }
 function joinClass(lesson, at){
   warmVoice();
+  if (STUDIO_OK && Settings.engine === 'studio'){ Studio.unlock(); Studio.load().catch(() => {}); }
   S.lesson = lesson; S.gen = {}; S.log = (at && at.log) || []; S.part = (at && at.part) || 0; S.beat = (at && at.beat) || 0;
   setHand(false); S.lastCheck = '';
   $('lobby').hidden = true; $('call').hidden = false;
@@ -1276,7 +1572,7 @@ async function startMyClass(){
   Settings.level = $('optLevel').value; Settings.checkins = $('optCheck').value; saveSettings(); syncSettingsUI();
   const needNotes = images.length > 0 || text.length > 60000;
   $('startBtn').hidden = true; $('prep').hidden = false;
-  $('prepTitle').textContent = 'Prof. Lumen is reading your lecture…';
+  $('prepTitle').textContent = `${T().full} is reading your lecture…`;
   const t0 = Date.now();
   clearInterval(prepT);
   prepT = setInterval(() => { $('prepSub').textContent = 'Working for ' + fmtTime((Date.now() - t0) / 1000) + '. Long lectures can take a minute or two.'; }, 1000);
@@ -1340,14 +1636,54 @@ function renderAI(){
 }
 
 /* ---------- Settings sheet ---------- */
-function renderVoiceSelect(){
+function voiceTipText(){
+  if (IS_IOS) return 'Tip for iPhone and iPad: for far more natural device voices, open the Settings app, then Accessibility, Spoken Content, Voices, English. Download voices marked Premium or Enhanced (like Ava, Zoe, Evan, Nathan, Serena or Jamie), then reopen this page.';
+  if (IS_MAC) return 'Tip for Mac: for far more natural device voices, open System Settings, Accessibility, Spoken Content, then System voice, Manage Voices. Download voices marked Premium or Enhanced, then reload this page.';
+  if (IS_EDGE) return 'Tip: in Microsoft Edge, the voices marked Online (Natural) sound the most human.';
+  return 'Tip: the Microsoft Edge browser has very natural "Online (Natural)" voices. On phones, voices marked Premium or Enhanced in your phone settings sound best.';
+}
+function renderVoiceUI(){
+  const t = T();
+  // Lobby note under the teacher cards
+  const note = $('voiceNote');
+  if (note){
+    let txt;
+    if (Settings.engine === 'studio' && STUDIO_OK && t.kokoro){
+      txt = Studio.state === 'ready' ? `<b>${esc(t.full)}</b> is using the studio voice.` : Studio.state === 'loading' ? `Studio voice downloading: ${Studio.pct}%. ${esc(t.name)} uses your device voice until it's ready.` : `Studio voice is on. It downloads when you join a class.`;
+    } else {
+      const v = deviceVoiceFor(t);
+      if (!synth || !v) txt = 'Your browser has no built-in voices, so captions will run without sound.';
+      else txt = `<b>${esc(t.full)}</b> uses the "${esc(v.name)}" voice on this device` + (voiceIsGoodMatch(t, v) ? '.' : `, the closest match available (no ${esc(t.accent)} ${esc(t.who)}'s voice found).`) + (STUDIO_OK && t.kokoro ? ' For a more realistic voice, turn on Studio voice in Settings.' : (QUALITY.test(v.name) ? '' : ' Settings has a tip for more natural voices.'));
+      if (STUDIO_OK && Settings.engine === 'studio' && !t.kokoro) txt += ` Studio voice doesn't have an ${esc(t.accent)} accent yet, so ${esc(t.name)} uses the device voice.`;
+    }
+    note.innerHTML = txt;
+  }
+  const badge = $('voiceBadge');
+  if (badge) badge.textContent = (Settings.engine === 'studio' && STUDIO_OK && t.kokoro && Studio.state === 'loading') ? ` · voice ${Studio.pct}%` : '';
+  // Settings sheet
   const sel = $('sVoice'); if (!sel) return;
   sel.replaceChildren();
-  if (!synth || !voices.length){ const o = document.createElement('option'); o.textContent = synth ? 'Default voice' : 'Voice not available in this browser'; sel.appendChild(o); sel.disabled = !synth; return; }
-  sel.disabled = false;
-  const cur = pickVoice();
-  const sorted = voices.slice().sort((a, b) => (/en[-_]US/i.test(b.lang) - /en[-_]US/i.test(a.lang)) || a.name.localeCompare(b.name));
-  for (const v of sorted){ const o = document.createElement('option'); o.value = v.voiceURI; o.textContent = `${v.name} (${v.lang})`; if (cur && v.voiceURI === cur.voiceURI) o.selected = true; sel.appendChild(o); }
+  if (!synth || !voices.length){ const o = document.createElement('option'); o.textContent = synth ? 'Default voice' : 'No voices in this browser'; sel.appendChild(o); sel.disabled = true; }
+  else {
+    sel.disabled = false;
+    const auto = document.createElement('option'); auto.value = ''; const best = (() => { const keep = (Settings.voiceFor || {})[t.id]; if (keep) Settings.voiceFor[t.id] = ''; const v = deviceVoiceFor(t); if (keep) Settings.voiceFor[t.id] = keep; return v; })();
+    auto.textContent = 'Best match' + (best ? ` (${best.name})` : ''); sel.appendChild(auto);
+    const sorted = voices.slice().sort((a, b) => (t.lang.test(b.lang) - t.lang.test(a.lang)) || (QUALITY.test(b.name) - QUALITY.test(a.name)) || a.name.localeCompare(b.name));
+    for (const v of sorted){ const o = document.createElement('option'); o.value = v.voiceURI; o.textContent = `${v.name} (${v.lang})`; sel.appendChild(o); }
+    sel.value = (Settings.voiceFor || {})[t.id] || '';
+  }
+  $('voiceTip').textContent = voiceTipText();
+  $('eDevice').checked = Settings.engine !== 'studio' || !STUDIO_OK;
+  $('eStudio').checked = Settings.engine === 'studio' && STUDIO_OK;
+  $('eStudio').disabled = !STUDIO_OK;
+  $('eStudioRow').classList.toggle('disabled', !STUDIO_OK);
+  if (!STUDIO_OK) $('studioNote').textContent = 'Available in the GitHub version of Lecture Room. Pages inside Claude can’t download the voice model, so this version uses your device voices.';
+  const bar = $('studioBar');
+  if (STUDIO_OK && Settings.engine === 'studio'){
+    bar.hidden = false;
+    $('studioFill').style.width = (Studio.state === 'ready' ? 100 : Studio.pct) + '%';
+    $('studioText').textContent = Studio.state === 'ready' ? 'Ready' : Studio.state === 'loading' ? `Downloading ${Studio.pct}%` : Studio.state === 'error' ? 'Download failed. Check your connection and try again.' : 'Downloads when you join a class or tap Hear the voice.';
+  } else bar.hidden = true;
 }
 function syncSettingsUI(){
   $('sVoiceOn').checked = !!Settings.voiceOn;
@@ -1355,7 +1691,7 @@ function syncSettingsUI(){
   $('sCheck').value = Settings.checkins; $('sLevel').value = Settings.level;
   $('optLevel').value = Settings.level; $('optCheck').value = Settings.checkins;
   $('sKey').value = Settings.apiKey || ''; $('sModel').value = Settings.model || 'claude-sonnet-5-5';
-  renderVoiceSelect(); renderAI();
+  renderTeachers(); renderVoiceUI(); renderAI();
 }
 let lastFocus = null;
 function openSheet(id){ lastFocus = document.activeElement; $(id).hidden = false; const f = $(id).querySelector('button,select,input'); if (f) f.focus(); }
@@ -1376,18 +1712,20 @@ document.addEventListener('keydown', e => {
 $('lobbySettings').onclick = openSettings;
 $('cSettings').onclick = openSettings;
 $('sVoiceOn').onchange = e => { Settings.voiceOn = e.target.checked; saveSettings(); if (!Settings.voiceOn) stopVoice(); };
-$('sVoice').onchange = e => { Settings.voiceURI = e.target.value; saveSettings(); };
+$('sVoice').onchange = e => { Settings.voiceFor = Object.assign({}, Settings.voiceFor, { [T().id]: e.target.value }); saveSettings(); renderVoiceUI(); };
+$('sTeacher').onchange = e => { Settings.teacher = e.target.value; saveSettings(); applyTeacher(); };
+document.querySelectorAll('input[name="engine"]').forEach(r => r.onchange = () => {
+  Settings.engine = $('eStudio').checked && STUDIO_OK ? 'studio' : 'device'; saveSettings(); renderVoiceUI();
+  if (Settings.engine === 'studio'){ Studio.unlock(); Studio.load().catch(() => {}); }
+});
 $('sRate').oninput = e => { Settings.rate = +e.target.value; $('sRateVal').textContent = Settings.rate.toFixed(2) + '×'; saveSettings(); };
 $('sCheck').onchange = e => { Settings.checkins = e.target.value; $('optCheck').value = Settings.checkins; saveSettings(); };
 $('sLevel').onchange = e => { Settings.level = e.target.value; $('optLevel').value = Settings.level; saveSettings(); };
 $('optLevel').onchange = e => { Settings.level = e.target.value; saveSettings(); };
 $('optCheck').onchange = e => { Settings.checkins = e.target.value; saveSettings(); };
 $('sTest').onclick = () => {
-  if (!synth){ return; }
-  stopVoice();
-  const u = new SpeechSynthesisUtterance('Hi, I am Professor Lumen. Ready when you are.');
-  const v = pickVoice(); if (v) u.voice = v; u.rate = Settings.rate;
-  try { synth.speak(u); } catch(e){}
+  if (Settings.engine === 'studio' && STUDIO_OK && T().kokoro && !Studio.tts){ Studio.unlock(); Studio.load().then(() => hearTeacher(T())).catch(() => {}); return; }
+  hearTeacher(T());
 };
 $('sKeySave').onclick = () => { Settings.apiKey = $('sKey').value.trim(); Settings.model = $('sModel').value.trim() || 'claude-sonnet-5-5'; saveSettings(); AI.refresh(); $('sAiStatus').textContent = Settings.apiKey ? 'Saved. Connected with your API key.' : 'No key saved.'; };
 $('sKeyClear').onclick = () => { Settings.apiKey = ''; $('sKey').value = ''; saveSettings(); AI.refresh(); };
@@ -1398,7 +1736,7 @@ function notesText(){
   const L = S.lesson || (store.get(SAVE_KEY, null) || {}).lesson; if (!L) return '';
   let out = L.title + '\n\n';
   for (const x of S.log){
-    if (x.type === 'part'){ const p = L.parts[x.i]; if (p && p.content) out += `Part ${x.i + 1}: ${p.content.title || p.title}\n${p.content.beats.map(b => b.say).join(' ')}\n\n`; }
+    if (x.type === 'part'){ const p = L.parts[x.i]; if (p && p.content) out += `Part ${x.i + 1}: ${p.content.title || p.title}\n${plain(p.content.beats.map(b => b.say).join(' '))}\n\n`; }
     else if (x.type === 'q') out += `Q: ${x.text}\n`;
     else if (x.type === 'a') out += `A: ${x.text}\n\n`;
   }
@@ -1413,7 +1751,7 @@ function openNotes(){
       if (x.type === 'part'){
         const p = L.parts[x.i]; if (!p || !p.content) continue;
         const d = document.createElement('div');
-        d.innerHTML = '<h3></h3><p></p>'; d.querySelector('h3').textContent = `Part ${x.i + 1}: ${p.content.title || p.title}`; d.querySelector('p').textContent = p.content.beats.map(b => b.say).join(' ');
+        d.innerHTML = '<h3></h3><p></p>'; d.querySelector('h3').textContent = `Part ${x.i + 1}: ${p.content.title || p.title}`; d.querySelector('p').textContent = plain(p.content.beats.map(b => b.say).join(' '));
         body.appendChild(d);
       } else {
         const pEl = document.createElement('p'); pEl.className = x.type === 'q' ? 'q' : 'a';
@@ -1475,12 +1813,12 @@ const DEMO = {
     { title: 'Voltage: how high the ladder is', goal: 'Understand voltage as height above ground.', points: ['ground is 0 V', 'battery lifts charge', 'voltage is a difference'],
       content: { title: 'Voltage: how high the ladder is',
         beats: [
-          { say: "Welcome to class! Today we'll learn three words that run every circuit: voltage, current, and resistance. Let's start at the floor. In a circuit the floor is called ground, and its height is zero volts.", show: ['s1'] },
-          { say: 'Now picture a ladder standing on that floor. Every step up the ladder is a little more voltage.', show: ['s2'] },
-          { say: "A nine volt battery is like a ladder nine steps tall. It lifts charge from ground all the way up to the top step.", show: ['s3'] },
-          { say: 'Think of each bit of charge as a ball we carry up the ladder. Up high, the ball has energy it wants to spend.', show: ['s4'] },
-          { say: 'When the ball rolls back down the slide to ground, it gives that energy away, maybe by lighting a bulb on the way.', show: ['s5'] },
-          { say: 'So voltage is just the height difference between two points. It is the push that gets charge moving.', show: ['s6'] }
+          { say: "Welcome to class! [pause] Today we're learning three words that run every circuit: voltage, current, and resistance. [pause] Okay, let's start at the floor. In a circuit, the floor is called ground, and its height is zero volts.", show: ['s1'] },
+          { say: "Now, picture a ladder standing on that floor. [pause] Every step up the ladder is a little more voltage.", show: ['s2'] },
+          { say: "So a nine volt battery is like a ladder nine steps tall. [pause] It lifts charge from ground all the way up to the top step.", show: ['s3'] },
+          { say: "Think of each bit of charge as a ball we carry up the ladder. Up high, that ball has energy it wants to spend.", show: ['s4'] },
+          { say: "And when the ball rolls back down the slide to ground, [pause] it gives that energy away, maybe by lighting a bulb on the way.", show: ['s5'] },
+          { say: "So, voltage is just the height difference between two points. [pause] It's the push that gets charge moving.", show: ['s6'] }
         ],
         svg: `<svg viewBox='0 0 800 450'>
 <g id='s1'><line x1='40' y1='405' x2='760' y2='405' class='ink'/><text x='620' y='438' class='ink small' text-anchor='middle'>ground = 0 volts</text></g>
@@ -1491,15 +1829,15 @@ const DEMO = {
 <g id='s5'><path d='M 282 74 Q 420 92 520 250 T 745 398' class='green' marker-end='url(#arrow-green)'/><text x='430' y='360' class='green small' text-anchor='middle'>energy out</text></g>
 <g id='s6'><line x1='166' y1='395' x2='166' y2='82' class='purple thin' marker-start='url(#arrow-purple)' marker-end='url(#arrow-purple)'/><text x='650' y='160' class='purple' text-anchor='middle'>voltage = height</text></g>
 </svg>`,
-        check: 'Quick check: if we swap in a twelve volt battery, is the ladder taller or shorter? And do you have any questions so far?' } },
+        check: "Quick check. [pause] If we swap in a twelve volt battery, is the ladder taller or shorter? And, do you have any questions so far?" } },
     { title: 'Current: how much flows', goal: 'Understand current as charge passing per second.', points: ['current = charge per second', 'measured in amps'],
       content: { title: 'Current: how much flows',
         beats: [
-          { say: "Next up is current. Let's turn our slide into a wire, a channel the charge can roll through.", show: ['s1'] },
-          { say: 'Here come the balls, the bits of charge, rolling along one after another.', show: ['s2'] },
-          { say: 'Now imagine you stand at one spot on the wire and count how many balls roll past you every second.', show: ['s3'] },
-          { say: "That count is the current. Current is not how high the balls are. It is how many go by each second.", show: ['s4'] },
-          { say: 'We measure current in amps. One amp is a huge crowd of charge, billions of billions of tiny bits, passing every single second.', show: ['s5'] }
+          { say: "Okay, next up is current. [pause] Let's turn our slide into a wire, a channel the charge can roll through.", show: ['s1'] },
+          { say: "Here come the balls, the bits of charge, rolling along one after another.", show: ['s2'] },
+          { say: "Now imagine you're standing at one spot on the wire. [pause] You count how many balls roll past you every second.", show: ['s3'] },
+          { say: "That count is the current. [pause] Current isn't how high the balls are. It's how many go by each second.", show: ['s4'] },
+          { say: "We measure current in amps. One amp is a huge crowd of charge, billions of billions of tiny bits, passing every single second.", show: ['s5'] }
         ],
         svg: `<svg viewBox='0 0 800 450'>
 <g id='s1'><line x1='60' y1='110' x2='740' y2='320' class='ink'/><line x1='60' y1='165' x2='740' y2='375' class='ink'/><text x='60' y='88' class='ink small'>the wire</text></g>
@@ -1508,16 +1846,16 @@ const DEMO = {
 <g id='s4'><text x='60' y='290' class='green big'>current =</text><text x='60' y='336' class='green'>balls per second</text></g>
 <g id='s5'><text x='60' y='405' class='ink'>measured in amps (A)</text></g>
 </svg>`,
-        check: 'Quick check: if twice as many balls rolled past you each second, what happened to the current? Any questions so far?' } },
+        check: "Quick check. [pause] If twice as many balls rolled past you each second, what happened to the current? Any questions so far?" } },
     { title: "Resistance and Ohm's law", goal: 'Understand resistance and use V = I x R.', points: ['resistance = narrowness, in ohms', 'V = I x R', '9 V / 3 ohms = 3 A'],
       content: { title: "Resistance and Ohm's law",
         beats: [
-          { say: 'Last idea. Picture two paths for our rolling balls. A wide path lets lots of them roll through easily.', show: ['s1'] },
-          { say: 'A narrow path squeezes them, so fewer get through each second. That squeezing is called resistance.', show: ['s2'] },
-          { say: 'Resistance is how hard the path makes it for charge to flow. We measure it in ohms.', show: ['s3'] },
-          { say: "Now the rule that ties it all together, called Ohm's law. V equals I times R. Voltage, the push, equals current, the flow, times resistance, the narrowness.", show: ['s4'] },
-          { say: "Let's try it. The push is nine volts and the resistance is three ohms. Flip the rule around: current equals voltage divided by resistance. Nine divided by three is three. So three amps flow.", show: ['s5'] },
-          { say: 'So remember: a bigger push means more flow, and a narrower path means less flow.', show: [] }
+          { say: "Last idea. [pause] Picture two paths for our rolling balls. A wide path lets lots of them roll through easily.", show: ['s1'] },
+          { say: "A narrow path squeezes them, so fewer get through each second. [pause] That squeezing is called resistance.", show: ['s2'] },
+          { say: "Resistance is how hard the path makes it for charge to flow. We measure it in ohms.", show: ['s3'] },
+          { say: "Now, the rule that ties it all together. It's called Ohm's law. [pause] V equals I times R. Voltage, the push, equals current, the flow, times resistance, the narrowness.", show: ['s4'] },
+          { say: "Let's try one. The push is nine volts, and the resistance is three ohms. [pause] Flip the rule around: current equals voltage divided by resistance. [pause] Nine divided by three is three. So, three amps flow.", show: ['s5'] },
+          { say: "So remember: a bigger push means more flow, and a narrower path means less flow.", show: [] }
         ],
         svg: `<svg viewBox='0 0 800 450'>
 <g id='s1'><text x='40' y='48' class='blue small'>wide path: easy flow</text><line x1='40' y1='66' x2='360' y2='66' class='ink'/><line x1='40' y1='150' x2='360' y2='150' class='ink'/><circle cx='85' cy='92' r='12' class='red solid'/><circle cx='85' cy='124' r='12' class='red solid'/><circle cx='155' cy='92' r='12' class='red solid'/><circle cx='155' cy='124' r='12' class='red solid'/><circle cx='225' cy='92' r='12' class='red solid'/><circle cx='225' cy='124' r='12' class='red solid'/><circle cx='295' cy='108' r='12' class='red solid'/></g>
@@ -1526,7 +1864,7 @@ const DEMO = {
 <g id='s4'><text x='400' y='292' class='ink bold' font-size='58' text-anchor='middle'>V = I × R</text><text x='318' y='334' class='orange small' text-anchor='middle'>push</text><text x='400' y='334' class='blue small' text-anchor='middle'>flow</text><text x='488' y='334' class='purple small' text-anchor='middle'>narrowness</text></g>
 <g id='s5'><text x='400' y='408' class='green' text-anchor='middle'>I = 9 V ÷ 3 ohms = 3 A</text></g>
 </svg>`,
-        check: 'Your turn. A nine volt battery and a nine ohm resistor. How many amps flow? Tell me your answer, or ask me anything.' } }
+        check: "Your turn. [pause] A nine volt battery and a nine ohm resistor. How many amps flow? Tell me your answer, or ask me anything." } }
   ]
 };
 const cloneDemo = () => JSON.parse(JSON.stringify(DEMO));
@@ -1541,7 +1879,7 @@ $('startBtn').onclick = startMyClass;
 $('prepStop').onclick = () => { if (prepCtl) try { prepCtl.abort(); } catch(e){} endPrep(); };
 $('resumeBtn').onclick = () => { const s = store.get(SAVE_KEY, null); if (s && s.lesson) joinClass(s.lesson, s); };
 $('resumeDrop').onclick = () => { store.del(SAVE_KEY); renderResume(); };
-syncSettingsUI(); renderResume(); setPlayButton();
+applyTeacher(); syncSettingsUI(); renderResume(); setPlayButton();
 AI.init();
 })();
 </script>
