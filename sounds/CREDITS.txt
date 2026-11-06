@@ -1,0 +1,5 @@
+Instrument sounds: Fluid R3 GM soundfont by Frank Wen, released under the
+Creative Commons Attribution 3.0 license (https://creativecommons.org/licenses/by/3.0/).
+Rendered to MP3 by Benjamin Gleitzman's midi-js-soundfonts project
+(https://github.com/gleitz/midi-js-soundfonts, MIT license, see MIDI-JS-SOUNDFONTS-LICENSE.txt).
+Notes were trimmed to each instrument's playing range for Song Builder.

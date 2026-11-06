@@ -12,6 +12,9 @@ Each version keeps its own link, so older ones never change:
 - **v3** (Nov 2026): volume sliders for chords and voice, notched pitch sliders (one half step at a time), and a popular-songs list: https://sergio-i1.github.io/song-builder/v3/
 - **v4** (Nov 2026): 12 instruments you can layer, songs load their own instruments and strum, a drag-and-drop strum pattern builder, a custom chord bank, and gentler drag scrolling: https://sergio-i1.github.io/song-builder/v4/
 - **v5** (Nov 2026): time signatures (4/4, 3/4, 6/8, 12/8), busier strum and picking patterns for slow songs, and 83 popular songs with genre filters: https://sergio-i1.github.io/song-builder/v5/
+- **v6** (Nov 2026): real recorded instrument sounds, full song layouts (intro, verses, choruses, bridge, outro in order), two chords per bar, checked tempos, and a Song pitch control: https://sergio-i1.github.io/song-builder/v6/
+
+Instrument sounds: Fluid R3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts. See `sounds/CREDITS.txt`.
 
 ## Also in this repo: Lecture Room
 
