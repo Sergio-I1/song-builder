@@ -69,7 +69,7 @@ button{cursor:pointer}
 .mini-top .grow{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mini-stage{position:relative}
 .mini-tile{position:absolute;right:8px;bottom:8px;width:24%;aspect-ratio:4/3;border-radius:10px;background:linear-gradient(160deg,#2B3350,#171B27);border:2px solid var(--good);overflow:hidden;box-shadow:0 6px 18px #0008}
-.mini-tile .av{position:absolute;inset:8% 10% 0;width:80%;height:92%}
+.mini-tile .av{position:absolute;inset:0;width:100%;height:100%}
 .mini-cap{margin-top:8px;padding:8px 10px;border-radius:10px;background:var(--panel-2);font-size:15px;color:var(--ink)}
 .mini-cap mark{background:var(--hl);color:var(--hl-ink);border-radius:3px;padding:0 2px}
 .demo-body{padding:18px 20px 20px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
@@ -103,7 +103,7 @@ select,input[type=text],input[type=password]{background:var(--bg);border:1px sol
 .ai-status button{border:0;background:none;color:var(--hl);font-weight:700;padding:0;text-decoration:underline}
 .prep{display:flex;align-items:center;gap:14px;background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:12px}
 .prep-av{width:58px;height:58px;border-radius:12px;background:linear-gradient(160deg,#2B3350,#171B27);position:relative;flex:none;overflow:hidden}
-.prep-av .av{position:absolute;inset:6px 6px 0;width:calc(100% - 12px);height:calc(100% - 6px)}
+.prep-av .av{position:absolute;inset:0;width:100%;height:100%}
 .prep .txt{flex:1;min-width:0;display:flex;flex-direction:column}
 .prep .txt span{color:var(--muted);font-size:14px}
 .form-err{margin:0;color:#FFB4B6;background:#3A1A1D;border:1px solid #6A2A30;border-radius:10px;padding:10px 12px;font-size:15px}
@@ -125,20 +125,32 @@ select,input[type=text],input[type=password]{background:var(--bg);border:1px sol
 .board g[data-step].on{opacity:1}
 
 /* ---------- Avatar ---------- */
-.av .mouth{transform-box:fill-box;transform-origin:center;transition:transform .07s linear}
-.av .eyes ellipse{transform-box:fill-box;transform-origin:center;animation:blink 5.5s infinite}
-.av .eyes ellipse:last-child{animation-delay:.02s}
-.av .eyes,.av .brows{transition:transform .25s ease}
-.av .head{transform-box:view-box;transform-origin:60px 88px}
-.speaking .av .head{animation:nod 3.4s ease-in-out infinite}
-.flap .av .mouth,.tcard.playing .av .mouth,.mini-tile .av .mouth{animation:talk .17s ease-in-out infinite alternate}
-.brows-up .av .brows{transform:translateY(-2.2px)}
-.look .av .eyes{transform:translate(-1.8px,-.8px)}
-.thinking .av .eyes{transform:translate(1.2px,-1.6px)}
-.thinking .av .head{transform:rotate(-3deg)}
-@keyframes talk{to{transform:scaleY(3.3)}}
-@keyframes blink{0%,95%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
-@keyframes nod{0%,100%{transform:rotate(0)}22%{transform:rotate(1.6deg) translateY(-.4px)}48%{transform:rotate(-1deg)}74%{transform:rotate(.9deg) translateY(.4px)}}
+.av .body{animation:breathe 4.8s ease-in-out infinite}
+.av .head{transform-box:view-box;transform-origin:80px 62px;transition:transform .3s ease}
+.av .eye{transform-box:fill-box;transform-origin:center;animation:blink 5.3s infinite}
+.av .eye + .eye{animation-delay:.03s}
+.av .iris,.av .brows{transition:transform .25s ease}
+.av .m-open{transform-box:fill-box;transform-origin:center;transform:scaleY(.15);transition:transform .07s linear}
+.av .m-low{transition:transform .07s linear}
+.av .corners{transition:opacity .3s}
+.av .hand{transform:translateY(36px);opacity:0;transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .3s}
+.speaking .av .head{animation:sway 3.6s ease-in-out infinite}
+.nod .av .head{animation:nodOnce .5s ease}
+.flap .av .m-open,.tcard.playing .av .m-open,.mini-tile .av .m-open{animation:talk .17s ease-in-out infinite alternate}
+.flap .av .m-low,.tcard.playing .av .m-low,.mini-tile .av .m-low{animation:jaw .17s ease-in-out infinite alternate}
+.brows-up .av .brows{transform:translateY(-.9px)}
+.look .av .iris{transform:translate(-.85px,.25px)}
+.thinking .av .iris{transform:translate(.75px,-.75px)}
+.thinking .av .head{transform:rotate(-2.5deg)}
+.smile .av .corners{opacity:1}
+.smile .av .m-low{transform:translateY(.35px)}
+.pointing .av .hand{transform:none;opacity:1}
+@keyframes talk{from{transform:scaleY(.2)}to{transform:scaleY(1.35)}}
+@keyframes jaw{from{transform:translateY(0)}to{transform:translateY(1.3px)}}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}96.5%{transform:scaleY(.08)}}
+@keyframes breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-.45px)}}
+@keyframes sway{0%,100%{transform:rotate(0)}25%{transform:rotate(1.1deg)}55%{transform:rotate(-.8deg)}80%{transform:rotate(.6deg) translateY(.3px)}}
+@keyframes nodOnce{0%,100%{transform:rotate(0)}40%{transform:rotate(1.2deg) translateY(.9px)}}
 
 /* ---------- Teacher picker ---------- */
 .teachers-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px}
@@ -148,7 +160,9 @@ select,input[type=text],input[type=password]{background:var(--bg);border:1px sol
 .tcard{scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:12px 8px;text-align:center;transition:border-color .15s,background .15s}
 .tcard:hover{border-color:#3B4459}
 .tcard .head{width:84px;height:84px;border-radius:50%;background:linear-gradient(160deg,#2A3150,#151925);overflow:hidden;position:relative;margin-bottom:4px}
-.tcard .head .av{position:absolute;left:50%;bottom:-8px;width:104px;height:104px;transform:translateX(-50%)}
+.tcard .head .av{position:absolute;inset:0;width:100%;height:100%}
+.namefield{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:15px;color:var(--muted)}
+.namefield input{max-width:220px}
 .tcard strong{font-size:15px}
 .tcard span{font-size:13px;color:var(--muted)}
 .tcard[aria-checked="true"]{border-color:var(--accent);background:var(--accent-soft)}
@@ -185,19 +199,21 @@ select,input[type=text],input[type=password]{background:var(--bg);border:1px sol
 .board-label .tag.q{background:#3B3413;border-color:#6E5E18;color:var(--hl)}
 .board-fit{position:relative}
 .side{display:flex;flex-direction:column;gap:10px;min-height:0}
-.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tiles{position:relative}
 .tile{position:relative;aspect-ratio:16/10;border-radius:12px;overflow:hidden;background:linear-gradient(160deg,#2A3150,#151925);border:2px solid transparent;transition:border-color .2s}
 .tile.speaking{border-color:var(--good)}
-.tile .av{position:absolute;left:50%;bottom:0;height:90%;width:auto;aspect-ratio:1;transform:translateX(-50%)}
+.tile .av{position:absolute;inset:0;width:100%;height:100%}
 .tile .name{position:absolute;left:8px;bottom:8px;font-size:12px;background:#000A;padding:2px 8px;border-radius:6px}
 .tile .dots{position:absolute;right:8px;top:8px;display:none;gap:4px;background:#000A;padding:6px 8px;border-radius:999px}
 .tile.thinking .dots{display:flex}
 .tile .dots i{width:6px;height:6px;border-radius:50%;background:var(--ink);animation:dot 1s infinite}
 .tile .dots i:nth-child(2){animation-delay:.15s}.tile .dots i:nth-child(3){animation-delay:.3s}
 @keyframes dot{50%{opacity:.25;transform:translateY(-2px)}}
-.tile.you{background:linear-gradient(160deg,#20242F,#13161E)}
+.tile.you{position:absolute;right:10px;bottom:10px;width:28%;max-width:132px;aspect-ratio:4/3;z-index:2;background:linear-gradient(160deg,#20242F,#13161E);border-color:#0A0C11;box-shadow:0 4px 14px #0008;border-radius:10px}
+.tile.you .name{left:5px;bottom:5px;font-size:10.5px;padding:1px 6px}
+.tile.you .hand-badge{right:4px;top:4px;padding:2px 6px;font-size:10.5px}
 .you-face{position:absolute;inset:0;display:grid;place-items:center}
-.you-face span{width:46%;max-width:72px;aspect-ratio:1;border-radius:50%;background:#384160;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:18px}
+.you-face span{width:44%;max-width:56px;aspect-ratio:1;border-radius:50%;background:#384160;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:14px}
 .hand-badge{position:absolute;right:8px;top:8px;background:var(--hl);color:var(--hl-ink);border-radius:999px;padding:4px 8px;display:flex;gap:4px;align-items:center;font-size:12px;font-weight:700}
 .hand-badge .i{width:16px;height:16px}
 .tile.you.listening{border-color:var(--accent)}
@@ -231,11 +247,11 @@ select,input[type=text],input[type=password]{background:var(--bg);border:1px sol
 .controls button:disabled{opacity:.4}
 
 @media (min-width:900px) and (min-height:560px){
-  .stage{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;overflow:hidden}
+  .stage{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;overflow:hidden}
   .board-area{min-height:0}
   .board-fit{flex:1;min-height:0;container-type:size;display:grid;place-items:center}
   .board-fit .board{width:min(100cqw,177.7cqh)}
-  .tiles{grid-template-columns:1fr}
+  .tile.prof{aspect-ratio:4/3}
   .chat{display:flex;flex-direction:column;flex:1;min-height:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
   .chat h3{margin:0;padding:10px 12px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
   .chat-log{flex:1;overflow:auto;padding:10px 12px;display:flex;flex-direction:column;gap:10px;font-size:14px}
@@ -322,6 +338,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <section class="teachers" aria-labelledby="tTitle">
     <div class="teachers-head"><h2 id="tTitle">Pick your teacher</h2><span class="hint">Tap one to hear their voice</span></div>
     <div class="trow" id="teacherRow" role="radiogroup" aria-labelledby="tTitle"></div>
+    <label class="namefield" for="youNameInput">What should your teacher call you? <input id="youNameInput" type="text" placeholder="Your first name" autocomplete="given-name" maxlength="30"></label>
     <p class="voice-note" id="voiceNote"></p>
   </section>
 
@@ -434,6 +451,11 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="sheet-head"><h2 id="setTitle">Settings</h2><button class="roundbtn" type="button" data-close aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
     <div class="sheet-body">
       <div class="field">
+        <label for="sName">Your name</label>
+        <input type="text" id="sName" placeholder="Your first name" autocomplete="given-name" maxlength="30">
+        <p class="help">Your teacher uses it now and then, like a real teacher would.</p>
+      </div>
+      <div class="field">
         <label for="sTeacher">Teacher</label>
         <select id="sTeacher"></select>
       </div>
@@ -442,7 +464,14 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <label class="check" for="sVoiceOn"><input type="checkbox" id="sVoiceOn" checked> Read the class out loud</label>
         <div class="engines">
           <label class="engine" id="eDeviceRow" for="eDevice"><input type="radio" name="engine" id="eDevice" value="device"><span><strong>Device voice</strong><small>Built into your phone or computer. Works everywhere and starts right away.</small></span></label>
-          <label class="engine" id="eStudioRow" for="eStudio"><input type="radio" name="engine" id="eStudio" value="studio"><span><strong>Studio voice (most realistic)</strong><small id="studioNote">A human-sounding AI voice that runs inside your browser for free. One-time download of about 90 MB. Best on a computer; it can lag on phones.</small></span></label>
+          <label class="engine" id="eStudioRow" for="eStudio"><input type="radio" name="engine" id="eStudio" value="studio"><span><strong>Studio voice (free, more natural)</strong><small id="studioNote">A human-sounding AI voice that runs inside your browser for free. One-time download of about 90 MB. Best on a computer; it can lag on phones.</small></span></label>
+          <label class="engine" id="ePremiumRow" for="ePremium"><input type="radio" name="engine" id="ePremium" value="premium"><span><strong>Premium voice (most human)</strong><small id="premiumNote">Real-sounding teacher voices from OpenAI, each with their own accent and a warm teaching style. Uses your own OpenAI API key and costs a few cents per class.</small></span></label>
+        </div>
+        <div class="field" id="premiumBox" hidden>
+          <label for="sOpenAI">OpenAI API key</label>
+          <input type="password" id="sOpenAI" placeholder="sk-…" autocomplete="off">
+          <p class="help" id="premiumHelp">Create one at platform.openai.com/api-keys and add a few dollars of credit. The key is saved only in this browser and sent only to OpenAI.</p>
+          <div class="row"><button class="btn primary" type="button" id="sOpenAISave">Save key</button><button class="btn ghost" type="button" id="sOpenAIClear">Remove key</button></div>
         </div>
         <div class="studio-bar" id="studioBar" hidden><div class="bar"><b id="studioFill"></b></div><span id="studioText"></span></div>
         <label for="sVoice">Device voice for this teacher</label>
@@ -515,7 +544,7 @@ const CLAUDE_URL = 'https://claude.ai/artifact/BtA2tgs9NvjuwwX1DMpKBe';
 
 /* ================= Settings ================= */
 const Settings = Object.assign({
-  voiceOn: true, rate: 1, checkins: 'each', level: 'new', teacher: 'maya', engine: 'device', voiceFor: {},
+  voiceOn: true, rate: 1, checkins: 'each', level: 'new', teacher: 'maya', engine: 'device', voiceFor: {}, name: '', openaiKey: '',
   apiKey: '', model: 'claude-sonnet-5-5'
 }, store.get('lectureRoom.settings', {}));
 const saveSettings = () => store.set('lectureRoom.settings', Settings);
@@ -526,19 +555,24 @@ const MALE = [/\bAlex\b/,/\bTom\b/,/Evan/,/Nathan/,/Aaron/,/\bFred/,/Daniel/,/Ol
 const TEACHERS = [
   { id: 'maya', name: 'Maya', accent: 'American', who: 'woman', kokoro: 'af_heart', lang: /en[-_]US/i,
     names: [/\bAva\b/, /\bZoe/, /Samantha/, /Allison/, /Aria\b/, /Jenny/, /Michelle/, /Susan/, /Joelle/, /Google US English/], avoid: MALE,
-    look: { skin: '#C99268', hair: '#3A2620', style: 'long', glasses: false, top: '#2E6E69', tie: false } },
+    look: { skin: '#C58C66', hair: '#3B2419', style: 'long', eye: '#4A2E1E', lip: '#B4615A', top: '#2F6B66', outfit: 'cardigan', inner: '#F1E6D6', earrings: true, room: { wall: '#CDBBA4', left: 'shelf', right: 'plant' } },
+    persona: 'upbeat and encouraging; you love everyday examples like phones, cooking and sports', ttsAccent: 'natural General American English', wording: '', tts: 'coral' },
   { id: 'marcus', name: 'Marcus', accent: 'American', who: 'man', kokoro: 'am_michael', lang: /en[-_]US/i,
     names: [/Evan/, /Nathan/, /\bTom\b/, /Aaron/, /Andrew/, /\bGuy\b/, /Christopher/, /Davis/, /Brian/, /\bAlex\b/, /\bFred/], avoid: FEMALE.concat([/Google US English/]),
-    look: { skin: '#7A4E33', hair: '#141214', style: 'short', glasses: true, top: '#3D4C74', tie: true } },
+    look: { skin: '#6E452D', hair: '#151213', style: 'short', beard: true, glasses: '#1B1B22', eye: '#2B1A12', lip: '#7A4038', top: '#33425F', outfit: 'blazer', shirt: '#EDEFF3', tie: '#7A2E35', room: { wall: '#A3B1B8', left: 'board', right: 'shelf' } },
+    persona: 'calm, steady and methodical; you like real engineering examples and building ideas up one piece at a time', ttsAccent: 'natural General American English', wording: '', tts: 'ash' },
   { id: 'eleanor', name: 'Eleanor', accent: 'British', who: 'woman', kokoro: 'bf_emma', lang: /en[-_]GB/i,
     names: [/Serena/, /\bKate\b/, /Stephanie/, /Martha/, /Sonia/, /Libby/, /Maisie/, /Hazel/, /Google UK English Female/], avoid: MALE,
-    look: { skin: '#EDC7AA', hair: '#A8652F', style: 'bun', glasses: true, top: '#6B3E66', tie: false } },
+    look: { skin: '#EBC4A6', hair: '#B9B2A9', style: 'bun', glasses: '#7A4B2A', lines: true, eye: '#4C6578', lip: '#B2675F', top: '#6E3F5E', outfit: 'cardigan', inner: '#EFE9E0', pearls: true, room: { wall: '#D9CDBD', left: 'window', right: 'shelf' } },
+    persona: 'gentle, precise and quietly witty; you love tidy step-by-step reasoning', ttsAccent: 'warm Southern British English (Received Pronunciation)', wording: 'Use natural British wording (for example "maths", "brilliant", "have a go").', tts: 'sage' },
   { id: 'james', name: 'James', accent: 'British', who: 'man', kokoro: 'bm_george', lang: /en[-_]GB/i,
     names: [/Jamie/, /Daniel/, /Arthur/, /Oliver/, /\bRyan/, /Thomas/, /George/, /Google UK English Male/], avoid: FEMALE,
-    look: { skin: '#E2B48F', hair: '#5B4636', style: 'side', glasses: false, top: '#2F3B52', tie: true } },
+    look: { skin: '#E0B08C', hair: '#6A4E39', style: 'side', stubble: true, eye: '#3E5A6E', lip: '#A65E52', top: '#5E5340', outfit: 'blazer', shirt: '#DCE6F2', tie: '#2E4A6E', room: { wall: '#B7C1AE', left: 'shelf', right: 'board' } },
+    persona: 'relaxed and friendly with a dry sense of humor; you like "imagine this" scenarios', ttsAccent: 'friendly London British English', wording: 'Use natural British wording (for example "maths", "brilliant", "have a go").', tts: 'ballad' },
   { id: 'priya', name: 'Priya', accent: 'Indian', who: 'woman', kokoro: null, lang: /en[-_]IN/i,
     names: [/\bIsha/, /Veena/, /Neerja/, /Heera/, /Sangeeta/, /Kajal/, /India/], avoid: MALE,
-    look: { skin: '#A86F4C', hair: '#17110F', style: 'center', glasses: false, top: '#9A3F2C', tie: false } }
+    look: { skin: '#A9704C', hair: '#140F0E', style: 'center', eye: '#2E1C14', lip: '#9A4B47', top: '#8C3B32', outfit: 'blazer', shirt: '#F3EEE6', earrings: true, room: { wall: '#C9BCAD', left: 'plant', right: 'window' } },
+    persona: 'energetic and curious; you like quick mini quizzes and real gadgets as examples', ttsAccent: 'natural Indian English', wording: '', tts: 'shimmer' }
 ];
 TEACHERS.forEach(t => { t.full = 'Prof. ' + t.name; });
 const T = () => TEACHERS.find(t => t.id === Settings.teacher) || TEACHERS[0];
@@ -548,54 +582,155 @@ function shade(hex, pct){
   const f = c => Math.max(0, Math.min(255, Math.round(c + (pct < 0 ? c : 255 - c) * pct / 100)));
   return '#' + [f(r), f(g), f(b)].map(x => x.toString(16).padStart(2, '0')).join('');
 }
-function avatarSVG(t){
-  const L = t.look, sk = L.skin, sh = shade(sk, -14), hr = L.hair;
-  const longBack = `<path d="M33 52 C29 21 91 21 87 52 L92 101 C80 109 40 109 28 101 Z" fill="${hr}"/>`;
-  const back = { long: longBack, center: longBack, bun: `<circle cx="60" cy="21" r="10.5" fill="${hr}"/>` }[L.style] || '';
-  const front = {
-    long: `<path d="M36 51 C34 27 48 21 61 21 C76 22 86 31 84 51 C79 39 69 33 57 33 C48 35 41 41 36 51 Z" fill="${hr}"/>`,
-    center: `<path d="M36 53 C35 27 48 21 60 22 C72 21 85 27 84 53 C80 36 69 30 60 27 C51 30 40 36 36 53 Z" fill="${hr}"/>`,
-    bun: `<path d="M36 47 C35 27 48 21 60 21 C73 21 85 28 84 47 C79 36 70 31 60 31 C50 31 41 36 36 47 Z" fill="${hr}"/>`,
-    short: `<path d="M37 45 C36 26 49 20 60 20 C73 20 85 27 83 45 C80 35 71 30 60 30 C49 30 40 35 37 45 Z" fill="${hr}"/>`,
-    side: `<path d="M36 48 C34 27 48 19 63 20 C78 21 87 31 84 47 C79 36 70 30 54 32 C47 34 40 40 36 48 Z" fill="${hr}"/><path d="M54 32 C60 26 70 24 78 27" stroke="${shade(hr, -30)}" stroke-width="1.4" fill="none"/>`
-  }[L.style];
-  const specs = L.glasses ? `<g fill="none" stroke="#1B1B22" stroke-width="1.8"><rect x="42" y="48" width="15" height="11" rx="4"/><rect x="63" y="48" width="15" height="11" rx="4"/><path d="M57 53h6M42 52l-5-1M78 52l5-1"/></g>` : '';
-  const neckline = L.tie
-    ? `<path d="M47 87l13 15 13-15" fill="#F1EEE6"/><path d="M57.5 90l2.5 14 2.5-14z" fill="${shade(L.top, 35)}"/>`
-    : `<path d="M48 86 Q60 100 72 86" fill="${shade(sk, -6)}"/><path d="M48 86 Q60 100 72 86" fill="none" stroke="${shade(L.top, 25)}" stroke-width="2"/>`;
-  return `<svg class="av" viewBox="0 0 120 120" aria-hidden="true">
-  ${back}
-  <path d="M12 121c3-25 23-35 48-35s45 10 48 35z" fill="${L.top}"/>
-  ${neckline}
-  <rect x="52" y="69" width="16" height="18" rx="7" fill="${sh}"/>
-  <g class="head">
-    <ellipse cx="37" cy="55" rx="3.8" ry="5.8" fill="${sh}"/><ellipse cx="83" cy="55" rx="3.8" ry="5.8" fill="${sh}"/>
-    <ellipse cx="60" cy="52" rx="23" ry="27" fill="${sk}"/>
-    ${front}
-    <g class="brows"><path d="M44 45q6-3 12 0M64 45q6-3 12 0" stroke="${shade(hr, -15)}" stroke-width="2.3" fill="none" stroke-linecap="round"/></g>
-    <g class="eyes"><ellipse cx="50" cy="54" rx="2.3" ry="2.7" fill="#1B1B22"/><ellipse cx="70" cy="54" rx="2.3" ry="2.7" fill="#1B1B22"/></g>
-    ${specs}
-    <path d="M60 57 q-2.4 6 1 7" stroke="${shade(sk, -32)}" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-    <ellipse cx="46" cy="64" rx="4" ry="2" fill="#E07A6A" opacity=".2"/><ellipse cx="74" cy="64" rx="4" ry="2" fill="#E07A6A" opacity=".2"/>
-    <ellipse class="mouth" cx="60" cy="71" rx="5.6" ry="1.7" fill="#6A2B2B"/>
-  </g>
-</svg>`;
+let avSeq = 0;
+function rng(seed){ let a = 0; for (const c of seed) a = (a * 31 + c.charCodeAt(0)) | 0; return () => { a = a + 0x6D2B79F5 | 0; let x = Math.imul(a ^ a >>> 15, 1 | a); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+const BOOKS = ['#9C3D3A', '#2F5E8C', '#C49A3A', '#3E7A55', '#6B4C8A', '#B8653A', '#E4D8BF', '#2A3B4F', '#7D8C3C'];
+function roomShelf(x, r){
+  let o = `<rect x="${x + 1}" y="6" width="44" height="80" rx="1.5" fill="#5E4130"/><rect x="${x + 3.5}" y="8.5" width="39" height="75" fill="#3A291E"/>`;
+  for (const sy of [29, 52, 75]){
+    let bx = x + 4.5;
+    while (true){
+      const w = 2.2 + r() * 2.6; if (bx + w > x + 42) break;
+      const h = 11 + r() * 7.5, c = BOOKS[Math.floor(r() * BOOKS.length)];
+      o += `<rect x="${bx.toFixed(1)}" y="${(sy - h).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="${c}"/>`;
+      bx += w + (r() < .14 ? 3.2 : .35);
+    }
+    o += `<rect x="${x + 3.5}" y="${sy}" width="39" height="2.4" fill="#7A573C"/>`;
+  }
+  return o;
 }
-function putAvatar(el, t){ const old = el.querySelector('.av'); if (old) old.remove(); el.insertAdjacentHTML('afterbegin', avatarSVG(t)); }
+function roomWindow(x, id){
+  return `<rect x="${x + 3}" y="7" width="40" height="54" fill="url(#${id}sky)"/>
+  <ellipse cx="${x + 14}" cy="53" rx="15" ry="10" fill="#6E9C6A" opacity=".55"/><ellipse cx="${x + 34}" cy="57" rx="12" ry="8" fill="#5D8A5B" opacity=".5"/>
+  <rect x="${x + 3}" y="7" width="40" height="54" fill="none" stroke="#F1ECE2" stroke-width="2.4"/>
+  <path d="M${x + 23} 7v54M${x + 3} 34h40" stroke="#F1ECE2" stroke-width="1.5"/>
+  <rect x="${x + 1}" y="61" width="44" height="3" fill="#E7E0D3"/>`;
+}
+function roomBoard(x){
+  return `<rect x="${x + 1}" y="10" width="45" height="36" rx="1" fill="#F6F5F0" stroke="#A4AAB2" stroke-width="1.7"/>
+  <path d="M${x + 6} 22 q4 -6 8 0 t8 0 t8 0" stroke="#2160E0" stroke-width="1.2" fill="none" opacity=".8"/>
+  <path d="M${x + 7} 34 h12 M${x + 25} 30 l6 6 M${x + 31} 30 l-6 6" stroke="#D3343C" stroke-width="1.1" opacity=".75"/>
+  <path d="M${x + 6} 40 h30" stroke="#1E2230" stroke-width=".9" opacity=".45"/>
+  <rect x="${x + 8}" y="46" width="30" height="2.2" fill="#8C939C"/>`;
+}
+function roomPlant(x){
+  const g = ['#4E7D4A', '#3F6D3E', '#5C8F55'];
+  const leaves = [[-8, -14, -35], [7, -15, 30], [-3, -21, -8], [10, -8, 55], [-11, -6, -60], [2, -25, 6], [-6, -26, -22]]
+    .map(([dx, dy, rot], i) => `<ellipse cx="${x + 23 + dx}" cy="${62 + dy}" rx="3.3" ry="8.5" fill="${g[i % 3]}" transform="rotate(${rot} ${x + 23 + dx} ${62 + dy})"/>`).join('');
+  return `<rect x="${x + 4}" y="10" width="22" height="16" fill="#ECE5D6" stroke="#8A6B4E" stroke-width="1.5"/><path d="M${x + 8} 22 l4 -5 3 3 3 -4 5 6" stroke="#7E9AB0" stroke-width="1.1" fill="none"/>
+  ${leaves}<path d="M${x + 15} 66 h16 l-2 14 h-12z" fill="#B5683F"/><rect x="${x + 9}" y="80" width="28" height="3" fill="#6E5440"/>`;
+}
+function avatarSVG(t, mode){
+  const id = 'av' + (++avSeq), L = t.look, scene = mode === 'scene', r = rng(t.id);
+  const sk = L.skin, skL = shade(sk, 14), skD = shade(sk, -14), skDD = shade(sk, -32);
+  const hr = L.hair, hrL = shade(hr, 30), hrD = shade(hr, -30);
+  const top = L.top, topL = shade(top, 16), topD = shade(top, -26);
+  const defs = `<defs>
+    <radialGradient id="${id}sk" cx="42%" cy="36%" r="72%"><stop offset="0" stop-color="${skL}"/><stop offset=".62" stop-color="${sk}"/><stop offset="1" stop-color="${skD}"/></radialGradient>
+    <linearGradient id="${id}hr" x1="0" y1="0" x2=".4" y2="1"><stop offset="0" stop-color="${hrL}"/><stop offset=".45" stop-color="${hr}"/><stop offset="1" stop-color="${hrD}"/></linearGradient>
+    <linearGradient id="${id}top" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${topL}"/><stop offset="1" stop-color="${topD}"/></linearGradient>
+    <linearGradient id="${id}neck" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${skDD}"/><stop offset=".6" stop-color="${skD}"/></linearGradient>
+    <linearGradient id="${id}wall" x1="0" y1="0" x2="1" y2=".3"><stop offset="0" stop-color="${shade(L.room.wall, 10)}"/><stop offset="1" stop-color="${shade(L.room.wall, -16)}"/></linearGradient>
+    <linearGradient id="${id}sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFD9EA"/><stop offset="1" stop-color="#F1E9DA"/></linearGradient>
+    <radialGradient id="${id}glow"><stop offset="0" stop-color="#FFE9C2" stop-opacity=".55"/><stop offset="1" stop-color="#FFE9C2" stop-opacity="0"/></radialGradient>
+    <radialGradient id="${id}vig" cx="50%" cy="46%" r="72%"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></radialGradient>
+    <filter id="${id}blur" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation="1.2"/></filter>
+  </defs>`;
+  const side = (kind, x) => kind === 'shelf' ? roomShelf(x, r) : kind === 'window' ? roomWindow(x, id) : kind === 'board' ? roomBoard(x) : kind === 'plant' ? roomPlant(x) : '';
+  const room = scene
+    ? `<g filter="url(#${id}blur)"><rect width="160" height="100" fill="url(#${id}wall)"/><circle cx="${L.room.left === 'window' ? 26 : 134}" cy="18" r="48" fill="url(#${id}glow)"/>${side(L.room.left, 3)}${side(L.room.right, 111)}<rect y="86" width="160" height="14" fill="#000" opacity=".1"/></g>`
+    : `<rect x="40" y="0" width="80" height="100" fill="url(#${id}wall)"/>`;
+  const backHair = {
+    long: `<path d="M62.5,40 C60,21 100,21 97.5,40 C99.5,55 103,71 98.5,81 C89,86 71,86 61.5,81 C57,71 60.5,55 62.5,40Z" fill="url(#${id}hr)"/>`,
+    center: `<path d="M63,40 C61,22 99,22 97,40 C98,56 100,72 97,84 C88,88 72,88 63,84 C60,72 62,56 63,40Z" fill="url(#${id}hr)"/>`,
+    bun: `<circle cx="80" cy="23.6" r="6.4" fill="url(#${id}hr)"/><path d="M75.4,25.4 Q80,20.8 84.6,25.4 M76.4,22 Q80,19.6 83.6,22" stroke="${hrD}" stroke-width=".45" fill="none" opacity=".55"/>`
+  }[L.style] || '';
+  const neck = `<path d="M73,53 L73,70 Q80,76 87,70 L87,53Z" fill="url(#${id}neck)"/>`;
+  const torsoTop = L.outfit === 'blazer' ? 'L87.5,66' : 'Q80,77 87.5,66';
+  const torso = `<path d="M16,101 C18,85 33,76.5 52,73.5 C60,72 67,69.5 72.5,66 ${torsoTop} C93,69.5 100,72 108,73.5 C127,76.5 142,85 144,101Z" fill="url(#${id}top)"/>`;
+  let outfit = '';
+  if (L.outfit === 'blazer'){
+    outfit = `<path d="M72.5,66 L80,83 L87.5,66 Q80,70.5 72.5,66Z" fill="${L.shirt}"/>
+      <path d="M72.5,66 L76.2,73.5 L80,69.6Z M87.5,66 L83.8,73.5 L80,69.6Z" fill="${shade(L.shirt, -9)}"/>
+      ${L.tie ? `<path d="M78.7,70.6 L81.3,70.6 L82.6,90 L80,93.5 L77.4,90Z" fill="${L.tie}"/><path d="M78.7,70.6 L81.3,70.6 L80.9,73.2 L79.1,73.2Z" fill="${shade(L.tie, -18)}"/>` : ''}
+      <path d="M72.5,66 L63,72.6 L75.5,96 L80,83Z" fill="${topD}" opacity=".9"/><path d="M87.5,66 L97,72.6 L84.5,96 L80,83Z" fill="${topD}" opacity=".9"/>
+      <path d="M63,72.6 L75.5,96 M97,72.6 L84.5,96" stroke="${shade(top, -40)}" stroke-width=".4" opacity=".6"/>`;
+  } else {
+    outfit = `<path d="M71,67 Q80,74.6 89,67 L84.2,101 L75.8,101Z" fill="${L.inner}"/>
+      <path d="M71,67 L75.8,101 M89,67 L84.2,101" stroke="${topD}" stroke-width="1.3"/>
+      <circle cx="74.4" cy="86" r=".75" fill="${shade(top, -38)}"/><circle cx="75.1" cy="93" r=".75" fill="${shade(top, -38)}"/>`;
+  }
+  if (L.pearls){
+    for (let k = 1; k < 10; k++){ const tt = k / 10, px = (1 - tt) * (1 - tt) * 72.4 + 2 * (1 - tt) * tt * 80 + tt * tt * 87.6, py = (1 - tt) * (1 - tt) * 67.6 + 2 * (1 - tt) * tt * 74.4 + tt * tt * 67.6; outfit += `<circle cx="${px.toFixed(2)}" cy="${py.toFixed(2)}" r=".62" fill="#F4F0E6" stroke="#CFC6B4" stroke-width=".15"/>`; }
+  }
+  const frontHair = {
+    long: `<path d="M64.5,43 C62.5,27 72,20.5 81.5,21.5 C91.5,22.5 98.5,29.5 95.5,44 C94.5,36 90,31 83,30 C79,34.5 71,38 64.5,43Z" fill="url(#${id}hr)"/><path d="M70,27 C75,24 83,24 88,26.5" stroke="${hrL}" stroke-width=".7" fill="none" opacity=".55"/>`,
+    center: `<path d="M65,45 C63.5,27 72.5,21.5 80,22.3 C87.5,21.5 96.5,27 95,45 C93.5,35.5 88.5,30 80.6,28.6 L80,27.6 L79.4,28.6 C71.5,30 66.5,35.5 65,45Z" fill="url(#${id}hr)"/><path d="M72,26.5 C75,24.3 78,23.4 80,23.4" stroke="${hrL}" stroke-width=".6" fill="none" opacity=".45"/>`,
+    bun: `<path d="M65.2,40.5 C64.5,27.5 72,23 80,23 C88,23 95.5,27.5 94.8,40.5 C93,33 87.5,29.4 80,29.4 C72.5,29.4 67,33 65.2,40.5Z" fill="url(#${id}hr)"/><path d="M69,30 C73,26 78,25 80,25 M91,30 C87,26 82,25 80,25" stroke="${hrD}" stroke-width=".4" fill="none" opacity=".5"/>`,
+    short: `<path d="M66.2,38 C65.5,27.5 72,23.6 80,23.6 C88,23.6 94.5,27.5 93.8,38 C92.5,31.8 87.5,28.6 80,28.6 C72.5,28.6 67.5,31.8 66.2,38Z" fill="url(#${id}hr)"/><path d="M66.3,38 L66.8,44 L67.8,44 L67.6,37 M93.7,38 L93.2,44 L92.2,44 L92.4,37" fill="${hr}"/>`,
+    side: `<path d="M65,41 C63,26.5 73,21.2 82.5,21.8 C92.5,22.6 97.5,29.5 95,41 C93.5,33.6 88.5,29.4 80.5,29.6 C74.5,30 68.8,33.8 65,41Z" fill="url(#${id}hr)"/><path d="M73.5,29.4 C78.5,24.6 88,24 93,28.3" stroke="${hrD}" stroke-width=".6" fill="none" opacity=".7"/><path d="M76,25 C81,22.8 87,23.2 90,25" stroke="${hrL}" stroke-width=".55" fill="none" opacity=".5"/>`
+  }[L.style];
+  const locks = (L.style === 'long' || L.style === 'center')
+    ? `<path d="M65,45 C62.5,57 62.5,70 65.5,80 C67.8,80.5 69.3,79 69.6,76.5 C67.6,67 67,56 67.8,46Z" fill="url(#${id}hr)"/><path d="M95,45 C97.5,57 97.5,70 94.5,80 C92.2,80.5 90.7,79 90.4,76.5 C92.4,67 93,56 92.2,46Z" fill="url(#${id}hr)"/>` : '';
+  const eye = cx => `<g class="eye"><ellipse cx="${cx}" cy="41.6" rx="2.75" ry="1.75" fill="#FBF8F3"/><g class="iris"><circle cx="${cx}" cy="41.6" r="1.32" fill="${L.eye}"/><circle cx="${cx}" cy="41.6" r=".64" fill="#0F0D0C"/><circle cx="${cx + .5}" cy="41.1" r=".36" fill="#fff"/></g><path d="M${cx - 2.9},41.2 Q${cx},38.8 ${cx + 2.9},41.2" stroke="#24180F" stroke-width=".62" fill="none" stroke-linecap="round"/></g>`;
+  const beard = L.beard
+    ? `<path d="M66,44 C67,54 72,61 80,62.4 C88,61 93,54 94,44 C93,49 90,54 86,57 C83,56.2 81.5,55.9 80,55.9 C78.5,55.9 77,56.2 74,57 C70,54 67,49 66,44Z" fill="${hr}" opacity=".94"/><path d="M75.2,51.7 Q77.5,50 80,50.7 Q82.5,50 84.8,51.7 Q80,51.2 75.2,51.7Z" fill="${hr}"/>`
+    : L.stubble ? `<path d="M67,45 C68,54 73,60.6 80,61.3 C87,60.6 92,54 93,45 C91,52 87,56 80,56.6 C73,56 69,52 67,45Z" fill="${hrD}" opacity=".17"/><path d="M75.5,51.3 Q80,49.8 84.5,51.3" stroke="${hrD}" stroke-width="1" opacity=".14" fill="none"/>` : '';
+  const glasses = L.glasses
+    ? `<g fill="#fff" fill-opacity=".07" stroke="${L.glasses}" stroke-width=".62"><rect x="70.2" y="38.7" width="7.6" height="5.6" rx="2.1"/><rect x="82.2" y="38.7" width="7.6" height="5.6" rx="2.1"/></g><path d="M77.8,41 Q80,40 82.2,41 M70.2,40.6 L66.4,40 M89.8,40.6 L93.6,40" stroke="${L.glasses}" stroke-width=".62" fill="none"/><path d="M71.5,43.4 L74,39.5 M83.5,43.4 L86,39.5" stroke="#fff" stroke-width=".35" opacity=".35"/>` : '';
+  const head = `<g class="head">
+    <ellipse cx="66" cy="43.5" rx="2.4" ry="3.9" fill="${skD}"/><ellipse cx="94" cy="43.5" rx="2.4" ry="3.9" fill="${skD}"/>
+    <path d="M65.8,42 q.9 -1.5 .9 1.5 M94.2,42 q-.9 -1.5 -.9 1.5" stroke="${skDD}" stroke-width=".4" fill="none" opacity=".6"/>
+    <path d="M66,40 C66,25 94,25 94,40 C94,52 88.5,60 80,61.2 C71.5,60 66,52 66,40Z" fill="url(#${id}sk)"/>
+    <path d="M94,40 C94,52 88.5,60 80,61.2 C86,58 91,51 92,40Z" fill="${skDD}" opacity=".2"/>
+    <ellipse cx="72" cy="49" rx="2.7" ry="1.3" fill="#E07A6A" opacity=".17"/><ellipse cx="88" cy="49" rx="2.7" ry="1.3" fill="#E07A6A" opacity=".17"/>
+    ${L.lines ? `<path d="M74.4,49.2 Q73.4,51.9 74.9,54.2 M85.6,49.2 Q86.6,51.9 85.1,54.2 M70.6,43.6 l-1.3 .5 M89.4,43.6 l1.3 .5" stroke="${skDD}" stroke-width=".38" opacity=".35" fill="none"/>` : ''}
+    ${beard}
+    <path d="M80.6,42.8 C80.8,45.2 81.9,46.6 81.6,47.8 C81,48.6 79.6,48.7 78.6,48.2" stroke="${skDD}" stroke-width=".52" fill="none" opacity=".75" stroke-linecap="round"/><ellipse cx="80" cy="48.2" rx="2.3" ry=".9" fill="${skDD}" opacity=".12"/>
+    <g class="mouth">
+      <g class="m-open"><ellipse cx="80" cy="53.35" rx="3.1" ry="1.55" fill="#4A1A1D"/><rect x="77.8" y="53.05" width="4.4" height=".55" rx=".25" fill="#F2EEE6"/></g>
+      <path d="M76.3,52.7 Q78.2,51.4 80,52.1 Q81.8,51.4 83.7,52.7 Q80,53.25 76.3,52.7Z" fill="${L.lip}"/>
+      <path class="m-low" d="M76.5,53.05 Q80,56 83.5,53.05 Q80,54.05 76.5,53.05Z" fill="${shade(L.lip, 8)}"/>
+      <path class="corners" d="M76.25,52.75 q-.6 -.15 -.85 -.8 M83.75,52.75 q.6 -.15 .85 -.8" stroke="${skDD}" stroke-width=".38" fill="none" opacity=".45" stroke-linecap="round"/>
+    </g>
+    ${eye(74)}${eye(86)}
+    <path d="M71.6,43.5 Q74,44.6 76.4,43.5 M83.6,43.5 Q86,44.6 88.4,43.5" stroke="${skDD}" stroke-width=".32" opacity=".4" fill="none"/>
+    <g class="brows"><path d="M70.8,37.6 Q74,35.9 77.2,37.4 M82.8,37.4 Q86,35.9 89.2,37.6" stroke="${hrD}" stroke-width="1.1" fill="none" stroke-linecap="round"/></g>
+    ${frontHair}${locks}
+    ${L.earrings ? `<circle cx="66.2" cy="47.8" r=".9" fill="#D8B45A"/><circle cx="93.8" cy="47.8" r=".9" fill="#D8B45A"/>` : ''}
+    ${glasses}
+  </g>`;
+  const hand = scene ? `<g class="hand"><g transform="rotate(-16 40 96)">
+    <path d="M33,102 L35,84 Q40,80.5 46,84 L47,102Z" fill="url(#${id}top)"/>
+    <rect x="38.6" y="62.5" width="3.8" height="15" rx="1.2" fill="#ECEAE4"/><rect x="38.6" y="59.6" width="3.8" height="5" rx="1.3" fill="#2160E0"/>
+    <ellipse cx="40.5" cy="80" rx="5.6" ry="6.4" fill="${sk}"/><path d="M35.6,78 q4.9 -2.4 9.8 0 M35.6,81 q4.9 -2.2 9.8 0" stroke="${skDD}" stroke-width=".45" fill="none" opacity=".5"/>
+    <ellipse cx="44.6" cy="76.4" rx="2.1" ry="3" fill="${skL}" transform="rotate(25 44.6 76.4)"/>
+  </g></g>` : '';
+  return `<svg class="av ${scene ? 'scene' : 'portrait'}" viewBox="${scene ? '0 0 160 100' : '54 17 52 52'}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${defs}${room}<g class="body">${backHair}${neck}${torso}${outfit}${head}</g>${hand}${scene ? `<rect width="160" height="100" fill="url(#${id}vig)"/>` : ''}</svg>`;
+}
+function putAvatar(el, t, mode){ const old = el.querySelector('.av'); if (old) old.remove(); el.insertAdjacentHTML('afterbegin', avatarSVG(t, mode)); }
+function initials(){ const n = (Settings.name || '').trim(); return n ? n.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() : 'You'; }
+function applyName(){
+  const n = (Settings.name || '').trim();
+  document.querySelector('#youTile .you-face span').textContent = initials();
+  $('youName').textContent = n || 'You';
+  if ($('youNameInput') && document.activeElement !== $('youNameInput')) $('youNameInput').value = n;
+  if ($('sName') && document.activeElement !== $('sName')) $('sName').value = n;
+}
 function applyTeacher(){
   const t = T();
-  ['profTile', 'previewTile', 'prepAv'].forEach(id => putAvatar($(id), t));
+  putAvatar($('profTile'), t, 'scene'); putAvatar($('previewTile'), t, 'scene'); putAvatar($('prepAv'), t, 'portrait');
   document.querySelectorAll('.tname').forEach(el => { el.textContent = t.full; });
   $('askInput').placeholder = `Ask ${t.full} anything…`;
   if (!$('call').hidden) $('capWho').textContent = $('capWho').textContent === 'You' || $('capWho').textContent === 'Notice' ? $('capWho').textContent : t.full;
-  renderTeachers(); renderVoiceUI();
+  renderTeachers(); renderVoiceUI(); applyName();
 }
 function renderTeachers(){
   const row = $('teacherRow'); if (!row) return;
   if (!row.children.length){
     for (const t of TEACHERS){
       const b = document.createElement('button'); b.type = 'button'; b.className = 'tcard'; b.setAttribute('role', 'radio'); b.dataset.id = t.id;
-      b.innerHTML = `<div class="head">${avatarSVG(t)}</div><strong>${esc(t.full)}</strong><span>${esc(t.accent)} · ${esc(t.who)}</span>`;
+      b.innerHTML = `<div class="head">${avatarSVG(t, 'portrait')}</div><strong>${esc(t.full)}</strong><span>${esc(t.accent)} · ${esc(t.who)}</span>`;
       b.onclick = () => { Settings.teacher = t.id; saveSettings(); applyTeacher(); hearTeacher(t, b); };
       row.appendChild(b);
     }
@@ -724,6 +859,8 @@ function revealAll(container){ container.querySelectorAll('[data-step]').forEach
 const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
 // The studio voice model downloads from Hugging Face, which pages shown inside Claude are not allowed to reach.
 const STUDIO_OK = !window.claude;
+const PREMIUM_OK = !window.claude; // pages inside Claude can't reach OpenAI either
+const GITHUB_URL = 'https://sergio-i1.github.io/song-builder/lecture-room/';
 const UA = navigator.userAgent || '';
 const IS_IOS = /iPhone|iPad|iPod/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1);
 const IS_MAC = /Macintosh/.test(UA) && !IS_IOS;
@@ -746,7 +883,7 @@ function deviceVoiceFor(t){
     const ni = t.names.findIndex(re => re.test(v.name));
     if (ni >= 0) sc += 100 - ni * 3;
     if (t.lang.test(v.lang)) sc += 40;
-    if (QUALITY.test(v.name)) sc += 25;
+    if (QUALITY.test(v.name)) sc += 60;
     if (t.avoid.some(re => re.test(v.name))) sc -= 90;
     if (/en[-_]US/i.test(v.lang)) sc += 1;
     if (sc > bestScore){ bestScore = sc; best = v; }
@@ -756,9 +893,10 @@ function deviceVoiceFor(t){
 function voiceIsGoodMatch(t, v){ return !!v && t.lang.test(v.lang) && !t.avoid.some(re => re.test(v.name)); }
 
 /* ---- Pacing: split what the teacher says into sentences with natural pauses between them ---- */
-const plain = s => String(s || '').replace(/\s*\[(?:pause|beat)\]\s*/gi, ' ').replace(/\s+/g, ' ').trim();
-function planSpeech(raw){
-  const parts = String(raw || '').split(/\s*\[(?:pause|beat)\]\s*/i).map(x => x.trim()).filter(Boolean);
+const personalize = s => String(s || '').replace(/\{name\}/g, (Settings.name || '').trim()).replace(/,\s*([!?.])/g, '$1');
+const plain = s => personalize(s).replace(/\s*\[(?:pause|beat)\]\s*/gi, ' ').replace(/\s+/g, ' ').trim();
+function planSpeech(raw, mode){
+  const parts = personalize(raw).split(/\s*\[(?:pause|beat)\]\s*/i).map(x => x.trim()).filter(Boolean);
   let clean = ''; const items = [];
   parts.forEach((p, pi) => {
     if (clean) clean += ' ';
@@ -771,9 +909,19 @@ function planSpeech(raw){
       const lead = x.s.length - x.s.trimStart().length; const t = x.s.trim(); if (!t) return;
       let gap = /\?["')\]]*$/.test(t) ? 480 : /[!]["')\]]*$/.test(t) ? 330 : 300;
       if (si === sents.length - 1 && pi < parts.length - 1) gap = 950;
-      items.push({ t, o: base + x.i + lead, gap });
+      items.push({ t, o: base + x.i + lead, gap, seg: pi });
     });
   });
+  if (mode === 'segments'){
+    // Premium voices read a whole thought at once, which sounds more natural than one sentence at a time.
+    const merged = [];
+    for (const it of items){
+      const last = merged[merged.length - 1];
+      if (last && last.seg === it.seg && (it.o + it.t.length - last.o) < 420){ last.t = clean.slice(last.o, it.o + it.t.length); last.gap = it.gap; }
+      else merged.push(Object.assign({}, it));
+    }
+    return { clean, items: merged };
+  }
   return { clean, items };
 }
 
@@ -814,13 +962,19 @@ function finishCaption(){ capSpans.forEach(sp => { sp.classList.add('said'); sp.
 /* ---- Teacher face ---- */
 const tile = () => $('profTile');
 function speakingUI(on){ tile().classList.toggle('speaking', !!on); }
-function setMouth(v){ const m = tile().querySelector('.mouth'); if (m) m.style.transform = v > 0.06 ? `scaleY(${(1 + Math.min(1, v) * 3.1).toFixed(2)})` : ''; }
+function setMouth(v){
+  const el = tile(), o = el.querySelector('.m-open'), lo = el.querySelector('.m-low'); if (!o) return;
+  if (v > 0.06){ const k = Math.min(1, v); o.style.transform = `scaleY(${(.2 + k * 1.3).toFixed(2)})`; lo.style.transform = `translateY(${(k * 1.4).toFixed(2)}px)`; }
+  else { o.style.transform = ''; lo.style.transform = ''; }
+}
 let pulseT = 0;
 function mouthPulse(){ setMouth(0.55 + Math.random() * 0.45); clearTimeout(pulseT); pulseT = setTimeout(() => setMouth(0.12), 120); }
 function setFlap(on){ tile().classList.toggle('flap', !!on); }
 function tileClass(c, on){ tile().classList.toggle(c, !!on); }
 let glanceT = 0;
-function glance(){ tileClass('look', true); clearTimeout(glanceT); glanceT = setTimeout(() => tileClass('look', false), 1300); }
+function glance(){ tileClass('look', true); tileClass('pointing', true); clearTimeout(glanceT); glanceT = setTimeout(() => { tileClass('look', false); tileClass('pointing', false); }, 1900); }
+let nodT = 0;
+function nod(){ tileClass('nod', false); void tile().offsetWidth; tileClass('nod', true); clearTimeout(nodT); nodT = setTimeout(() => tileClass('nod', false), 520); }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 /* ---- Studio voice: Kokoro, a small open AI voice model that runs in the browser ---- */
@@ -888,20 +1042,60 @@ Studio.play = function(clip, onTick){
     Studio.stopCur = () => { try { a.pause(); } catch(e){} fin(true); };
     a.onended = () => fin(true); a.onerror = () => fin(false);
     a.src = clip.url;
-    const tick = () => { const tt = a.currentTime || 0; onTick(Math.min(1, tt / clip.dur), clip.env[Math.floor(tt / 0.025)] || 0); raf = requestAnimationFrame(tick); };
+    const rate = clip.rate || 1; a.defaultPlaybackRate = rate; a.playbackRate = rate; try { a.preservesPitch = true; } catch(e){}
+    const tick = () => { const tt = a.currentTime || 0, d = clip.dur || a.duration || 1; onTick(Math.min(1, tt / d), clip.env ? (clip.env[Math.floor(tt / 0.025)] || 0) : -1); raf = requestAnimationFrame(tick); };
     let pr; try { pr = a.play(); } catch(e){ return fin(false); }
     if (pr && pr.then) pr.then(() => { raf = requestAnimationFrame(tick); }).catch(() => fin(false)); else raf = requestAnimationFrame(tick);
   });
 };
+/* ---- Premium voice: OpenAI text-to-speech with a teaching style and accent per teacher ---- */
+const Premium = { cache: new Map(), broken: '', model: 'gpt-4o-mini-tts' };
+function ttsInstructions(t){
+  return `Voice: ${t.full}, a warm, patient university professor teaching one student live on a video call. Accent: ${t.ttsAccent}. Personality: ${t.persona}. Tone: friendly, encouraging and clear, like a favorite teacher. Pacing: natural and conversational, never rushed; slow down a little for new terms, numbers and equations. Delivery: sound like a real person explaining off the cuff, not reading a script; let questions rise naturally; smile in the voice when greeting or praising.`;
+}
+Premium.fail = msg => { Premium.broken = msg; renderVoiceUI(); };
+Premium.clip = function(text, t){
+  const key = t.id + '|' + text;
+  if (Premium.cache.has(key)) return Premium.cache.get(key);
+  const p = (async () => {
+    const call = async (model, withStyle) => {
+      const body = { model, voice: t.tts, input: text, response_format: 'mp3' };
+      if (withStyle) body.instructions = ttsInstructions(t);
+      else if (body.voice === 'ballad') body.voice = 'fable';
+      try { return await fetch('https://api.openai.com/v1/audio/speech', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + Settings.openaiKey }, body: JSON.stringify(body) }); }
+      catch(e){ throw { code: 'network' }; }
+    };
+    let res = await call(Premium.model, Premium.model === 'gpt-4o-mini-tts');
+    if (!res.ok){
+      let msg = ''; try { const j = await res.clone().json(); msg = (j.error && ((j.error.code || '') + ' ' + (j.error.message || ''))) || ''; } catch(e){}
+      if ((res.status === 404 || res.status === 400) && /model/i.test(msg) && Premium.model !== 'tts-1-hd'){ Premium.model = 'tts-1-hd'; res = await call('tts-1-hd', false); }
+      if (!res.ok){
+        if (res.status === 401) Premium.fail('That OpenAI key did not work. Check it in Settings.');
+        else if (res.status === 429 && /quota|billing/i.test(msg)) Premium.fail('Your OpenAI account is out of credit. Add credit at platform.openai.com, or pick another voice in Settings.');
+        else if (res.status === 403) Premium.fail('This OpenAI key is not allowed to make voices. Check its permissions at platform.openai.com.');
+        throw { code: 'http', status: res.status, message: msg };
+      }
+    }
+    const ab = await res.arrayBuffer();
+    let env = null, dur = 0;
+    try { const C = window.OfflineAudioContext || window.webkitOfflineAudioContext; const ctx = new C(1, 2, 44100); const buf = await ctx.decodeAudioData(ab.slice(0)); env = envelope(buf.getChannelData(0), buf.sampleRate); dur = buf.duration; } catch(e){}
+    return { url: URL.createObjectURL(new Blob([ab], { type: 'audio/mpeg' })), env, dur, rate: Settings.rate };
+  })();
+  Premium.cache.set(key, p);
+  p.catch(() => Premium.cache.delete(key));
+  if (Premium.cache.size > 60){ const k = Premium.cache.keys().next().value; const old = Premium.cache.get(k); Premium.cache.delete(k); old.then(c => setTimeout(() => URL.revokeObjectURL(c.url), 60000)).catch(() => {}); }
+  return p;
+};
 function engineFor(t){
   if (!Settings.voiceOn) return 'timed';
+  if (Settings.engine === 'premium' && PREMIUM_OK && Settings.openaiKey && !Premium.broken) return 'premium';
   if (Settings.engine === 'studio' && STUDIO_OK && t.kokoro && Studio.tts) return 'studio';
   return synth ? 'device' : 'timed';
 }
 function prefetchSpeech(raw){
-  const t = T();
-  if (engineFor(t) !== 'studio') return;
-  for (const it of planSpeech(raw).items) Studio.clip(it.t, t.kokoro).catch(() => {});
+  const t = T(), eng = engineFor(t);
+  if (eng === 'premium') for (const it of planSpeech(raw, 'segments').items) Premium.clip(it.t, t).catch(() => {});
+  else if (eng === 'studio') for (const it of planSpeech(raw).items) Studio.clip(it.t, t.kokoro).catch(() => {});
 }
 function stopVoice(){
   if (synth){ try { synth.cancel(); } catch(e){} }
@@ -946,6 +1140,17 @@ function deviceSpeak(it, id, t){
     try { synth.speak(u); } catch(e){ end(); }
   });
 }
+async function premiumSpeak(it, id, t){
+  let clip;
+  try { clip = await Promise.race([Premium.clip(it.t, t), sleep(25000).then(() => { throw new Error('slow'); })]); }
+  catch(e){ return synth ? deviceSpeak(it, id, t) : timedSpeak(it, id); }
+  if (id !== S.runId) return;
+  const len = it.t.length;
+  if (!clip.env) setFlap(true);
+  const ok = await Studio.play(clip, (frac, amp) => { if (id !== S.runId) return; if (amp >= 0) setMouth(amp); markWord(Math.floor(it.o + frac * len)); });
+  setFlap(false); setMouth(0);
+  if (!ok && id === S.runId) return synth ? deviceSpeak(it, id, t) : timedSpeak(it, id);
+}
 async function studioSpeak(it, id, t){
   let clip;
   try { clip = await Promise.race([Studio.clip(it.t, t.kokoro), sleep(20000).then(() => { throw new Error('slow'); })]); }
@@ -960,23 +1165,24 @@ async function studioSpeak(it, id, t){
 // Say a whole line with captions and natural pauses. Resolves when finished or when the class moves on (runId changes).
 async function say(raw, id, who){
   const t = T();
-  const plan = planSpeech(raw);
+  const eng = engineFor(t);
+  const plan = planSpeech(raw, eng === 'premium' ? 'segments' : '');
   setCaption(plan.clean, who || t.full);
   if (!plan.items.length) return;
   const alive = () => id === S.runId;
-  const eng = engineFor(t);
-  if (eng === 'studio') prefetchSpeech(raw);
+  if (eng === 'studio' || eng === 'premium') prefetchSpeech(raw);
   speakingUI(true);
   for (let k = 0; k < plan.items.length; k++){
     if (!alive()) break;
     const it = plan.items[k];
     tileClass('brows-up', /\?["')\]]*$/.test(it.t));
-    if (eng === 'studio') await studioSpeak(it, id, t);
+    if (eng === 'premium') await premiumSpeak(it, id, t);
+    else if (eng === 'studio') await studioSpeak(it, id, t);
     else if (eng === 'device') await deviceSpeak(it, id, t);
     else await timedSpeak(it, id);
     tileClass('brows-up', false);
     if (!alive()) break;
-    if (k < plan.items.length - 1) await sleep(it.gap / Settings.rate);
+    if (k < plan.items.length - 1){ if (it.gap > 600) nod(); await sleep(it.gap / Settings.rate); }
   }
   if (alive()){ speakingUI(false); setMouth(0); finishCaption(); }
 }
@@ -988,9 +1194,14 @@ async function hearTeacher(t, card){
   stopVoice(); const my = ++previewToken;
   document.querySelectorAll('.tcard.playing').forEach(c => c.classList.remove('playing'));
   if (card) card.classList.add('playing');
-  const line = `Hi, I'm ${t.full}. I'll explain everything step by step, and stop to check in with you along the way.`;
+  const nm = (Settings.name || '').trim();
+  const line = `Hi${nm ? ' ' + nm : ''}, I'm ${t.full}. I'll explain everything step by step, and I'll stop to check in with you along the way.`;
   const doneUI = () => { if (my === previewToken && card) card.classList.remove('playing'); };
   if (!Settings.voiceOn){ setTimeout(doneUI, 1500); return; }
+  if (Settings.engine === 'premium' && PREMIUM_OK && Settings.openaiKey && !Premium.broken){
+    Studio.unlock();
+    try { const c = await Premium.clip(line, t); if (my === previewToken) await Studio.play(c, () => {}); return doneUI(); } catch(e){}
+  }
   if (Settings.engine === 'studio' && STUDIO_OK && t.kokoro && Studio.tts){
     Studio.unlock();
     try { const c = await Studio.clip(line, t.kokoro); if (my === previewToken) await Studio.play(c, () => {}); } catch(e){}
@@ -1099,6 +1310,8 @@ const levelLine = lv => lv === 'some'
   ? 'The student already knows the basics of this subject, so you can move a little faster, but still keep words plain.'
   : 'The student is brand new to this topic. Assume no background at all.';
 const rules = () => `You are ${T().full}, a warm, patient professor teaching ONE student live, like a small video call with a shared whiteboard.
+Your personality: ${T().persona}. ${T().wording}
+${(Settings.name || '').trim() ? `The student's name is ${(Settings.name || '').trim()}. Use it now and then, like a real teacher would (not in every line).` : ''}
 How you talk:
 - Plain, everyday words and short sentences. One idea at a time.
 - Give each new idea a simple real-life analogy, and define every technical word the first time you use it.
@@ -1357,7 +1570,7 @@ function setPlayButton(){
   else if (S.phase === 'done'){ use.setAttribute('href', '#i-play'); lbl.textContent = 'Resume'; btn.disabled = true; }
   else { use.setAttribute('href', '#i-play'); lbl.textContent = 'Resume'; }
 }
-function setPhase(p){ S.phase = p; setPlayButton(); renderProgress(); }
+function setPhase(p){ S.phase = p; setPlayButton(); renderProgress(); tileClass('smile', p === 'checkin' || p === 'done' || p === 'hand' || p === 'paused'); }
 
 function renderChat(){
   const box = $('chatLog'); box.replaceChildren();
@@ -1538,6 +1751,7 @@ function warmVoice(){ if (synth && Settings.voiceOn){ try { const u = new Speech
 function joinClass(lesson, at){
   warmVoice();
   if (STUDIO_OK && Settings.engine === 'studio'){ Studio.unlock(); Studio.load().catch(() => {}); }
+  if (Settings.engine === 'premium') Studio.unlock();
   S.lesson = lesson; S.gen = {}; S.log = (at && at.log) || []; S.part = (at && at.part) || 0; S.beat = (at && at.beat) || 0;
   setHand(false); S.lastCheck = '';
   $('lobby').hidden = true; $('call').hidden = false;
@@ -1644,42 +1858,55 @@ function voiceTipText(){
 }
 function renderVoiceUI(){
   const t = T();
-  // Lobby note under the teacher cards
+  const eng = Settings.voiceOn ? (Settings.engine === 'premium' && PREMIUM_OK ? 'premium' : Settings.engine === 'studio' && STUDIO_OK ? 'studio' : 'device') : 'off';
   const note = $('voiceNote');
   if (note){
-    let txt;
-    if (Settings.engine === 'studio' && STUDIO_OK && t.kokoro){
-      txt = Studio.state === 'ready' ? `<b>${esc(t.full)}</b> is using the studio voice.` : Studio.state === 'loading' ? `Studio voice downloading: ${Studio.pct}%. ${esc(t.name)} uses your device voice until it's ready.` : `Studio voice is on. It downloads when you join a class.`;
-    } else {
-      const v = deviceVoiceFor(t);
-      if (!synth || !v) txt = 'Your browser has no built-in voices, so captions will run without sound.';
-      else txt = `<b>${esc(t.full)}</b> uses the "${esc(v.name)}" voice on this device` + (voiceIsGoodMatch(t, v) ? '.' : `, the closest match available (no ${esc(t.accent)} ${esc(t.who)}'s voice found).`) + (STUDIO_OK && t.kokoro ? ' For a more realistic voice, turn on Studio voice in Settings.' : (QUALITY.test(v.name) ? '' : ' Settings has a tip for more natural voices.'));
-      if (STUDIO_OK && Settings.engine === 'studio' && !t.kokoro) txt += ` Studio voice doesn't have an ${esc(t.accent)} accent yet, so ${esc(t.name)} uses the device voice.`;
-    }
+    let txt = '';
+    const dv = deviceVoiceFor(t);
+    const deviceLine = () => {
+      if (!synth || !dv) return 'Your browser has no built-in voices, so captions will run without sound.';
+      let x = `<b>${esc(t.full)}</b> uses the "${esc(dv.name)}" voice on this device` + (voiceIsGoodMatch(t, dv) ? '.' : `, the closest match (no ${esc(t.accent)} ${esc(t.who)}'s voice found).`);
+      if (!QUALITY.test(dv.name)) x += ' ' + esc(voiceTipText());
+      return x;
+    };
+    if (eng === 'premium'){
+      txt = Premium.broken ? `${esc(Premium.broken)} Using the device voice for now.` : !Settings.openaiKey ? 'Premium voice is on. Add your OpenAI key in Settings to hear it.' : `<b>${esc(t.full)}</b> is using the premium voice.`;
+    } else if (eng === 'studio'){
+      if (!t.kokoro) txt = `Studio voice doesn't have an ${esc(t.accent)} accent yet, so ${esc(t.name)} uses the device voice. ` + deviceLine();
+      else txt = Studio.state === 'ready' ? `<b>${esc(t.full)}</b> is using the studio voice.` : Studio.state === 'loading' ? `Studio voice downloading: ${Studio.pct}%. ${esc(t.name)} uses your device voice until it's ready.` : 'Studio voice is on. It downloads when you join a class.';
+    } else if (eng === 'device'){
+      txt = deviceLine();
+      if (!PREMIUM_OK) txt += ` For the most human voices, open <a href="${esc(GITHUB_URL)}" target="_blank" rel="noopener">the GitHub version</a> and turn on Premium voice.`;
+      else txt += ' For the most human voices, turn on Premium voice in Settings.';
+    } else txt = 'Voice is off. Captions only.';
     note.innerHTML = txt;
   }
   const badge = $('voiceBadge');
-  if (badge) badge.textContent = (Settings.engine === 'studio' && STUDIO_OK && t.kokoro && Studio.state === 'loading') ? ` · voice ${Studio.pct}%` : '';
-  // Settings sheet
+  if (badge) badge.textContent = (eng === 'studio' && t.kokoro && Studio.state === 'loading') ? ` · voice ${Studio.pct}%` : '';
   const sel = $('sVoice'); if (!sel) return;
   sel.replaceChildren();
   if (!synth || !voices.length){ const o = document.createElement('option'); o.textContent = synth ? 'Default voice' : 'No voices in this browser'; sel.appendChild(o); sel.disabled = true; }
   else {
     sel.disabled = false;
-    const auto = document.createElement('option'); auto.value = ''; const best = (() => { const keep = (Settings.voiceFor || {})[t.id]; if (keep) Settings.voiceFor[t.id] = ''; const v = deviceVoiceFor(t); if (keep) Settings.voiceFor[t.id] = keep; return v; })();
-    auto.textContent = 'Best match' + (best ? ` (${best.name})` : ''); sel.appendChild(auto);
+    const keep = (Settings.voiceFor || {})[t.id]; if (keep) Settings.voiceFor[t.id] = '';
+    const best = deviceVoiceFor(t); if (keep) Settings.voiceFor[t.id] = keep;
+    const auto = document.createElement('option'); auto.value = ''; auto.textContent = 'Best match' + (best ? ` (${best.name})` : ''); sel.appendChild(auto);
     const sorted = voices.slice().sort((a, b) => (t.lang.test(b.lang) - t.lang.test(a.lang)) || (QUALITY.test(b.name) - QUALITY.test(a.name)) || a.name.localeCompare(b.name));
     for (const v of sorted){ const o = document.createElement('option'); o.value = v.voiceURI; o.textContent = `${v.name} (${v.lang})`; sel.appendChild(o); }
     sel.value = (Settings.voiceFor || {})[t.id] || '';
   }
   $('voiceTip').textContent = voiceTipText();
-  $('eDevice').checked = Settings.engine !== 'studio' || !STUDIO_OK;
-  $('eStudio').checked = Settings.engine === 'studio' && STUDIO_OK;
-  $('eStudio').disabled = !STUDIO_OK;
-  $('eStudioRow').classList.toggle('disabled', !STUDIO_OK);
-  if (!STUDIO_OK) $('studioNote').textContent = 'Available in the GitHub version of Lecture Room. Pages inside Claude can’t download the voice model, so this version uses your device voices.';
+  $('eDevice').checked = eng === 'device' || eng === 'off';
+  $('eStudio').checked = eng === 'studio';
+  $('ePremium').checked = eng === 'premium';
+  $('eStudio').disabled = !STUDIO_OK; $('ePremium').disabled = !PREMIUM_OK;
+  $('eStudioRow').classList.toggle('disabled', !STUDIO_OK); $('ePremiumRow').classList.toggle('disabled', !PREMIUM_OK);
+  if (!STUDIO_OK) $('studioNote').textContent = 'Works in the GitHub version of Lecture Room. Pages inside Claude can’t download the voice model.';
+  if (!PREMIUM_OK) $('premiumNote').innerHTML = `The most human voices, with each teacher's accent. Works in <a href="${esc(GITHUB_URL)}" target="_blank" rel="noopener">the GitHub version</a> (pages inside Claude can't reach OpenAI). Uses your own OpenAI API key, a few cents per class.`;
+  $('premiumBox').hidden = !(PREMIUM_OK && eng === 'premium');
+  if (PREMIUM_OK && eng === 'premium') $('premiumHelp').textContent = Premium.broken || (Settings.openaiKey ? 'Key saved in this browser. Tap Hear the voice to try it.' : 'Create one at platform.openai.com/api-keys and add a few dollars of credit. The key is saved only in this browser and sent only to OpenAI.');
   const bar = $('studioBar');
-  if (STUDIO_OK && Settings.engine === 'studio'){
+  if (eng === 'studio'){
     bar.hidden = false;
     $('studioFill').style.width = (Studio.state === 'ready' ? 100 : Studio.pct) + '%';
     $('studioText').textContent = Studio.state === 'ready' ? 'Ready' : Studio.state === 'loading' ? `Downloading ${Studio.pct}%` : Studio.state === 'error' ? 'Download failed. Check your connection and try again.' : 'Downloads when you join a class or tap Hear the voice.';
@@ -1691,7 +1918,8 @@ function syncSettingsUI(){
   $('sCheck').value = Settings.checkins; $('sLevel').value = Settings.level;
   $('optLevel').value = Settings.level; $('optCheck').value = Settings.checkins;
   $('sKey').value = Settings.apiKey || ''; $('sModel').value = Settings.model || 'claude-sonnet-5-5';
-  renderTeachers(); renderVoiceUI(); renderAI();
+  $('sOpenAI').value = Settings.openaiKey || '';
+  renderTeachers(); renderVoiceUI(); renderAI(); applyName();
 }
 let lastFocus = null;
 function openSheet(id){ lastFocus = document.activeElement; $(id).hidden = false; const f = $(id).querySelector('button,select,input'); if (f) f.focus(); }
@@ -1715,7 +1943,8 @@ $('sVoiceOn').onchange = e => { Settings.voiceOn = e.target.checked; saveSetting
 $('sVoice').onchange = e => { Settings.voiceFor = Object.assign({}, Settings.voiceFor, { [T().id]: e.target.value }); saveSettings(); renderVoiceUI(); };
 $('sTeacher').onchange = e => { Settings.teacher = e.target.value; saveSettings(); applyTeacher(); };
 document.querySelectorAll('input[name="engine"]').forEach(r => r.onchange = () => {
-  Settings.engine = $('eStudio').checked && STUDIO_OK ? 'studio' : 'device'; saveSettings(); renderVoiceUI();
+  Settings.engine = $('ePremium').checked && PREMIUM_OK ? 'premium' : $('eStudio').checked && STUDIO_OK ? 'studio' : 'device'; saveSettings(); renderVoiceUI();
+  if (Settings.engine === 'premium' && !Settings.openaiKey) setTimeout(() => $('sOpenAI').focus(), 50);
   if (Settings.engine === 'studio'){ Studio.unlock(); Studio.load().catch(() => {}); }
 });
 $('sRate').oninput = e => { Settings.rate = +e.target.value; $('sRateVal').textContent = Settings.rate.toFixed(2) + '×'; saveSettings(); };
@@ -1723,7 +1952,13 @@ $('sCheck').onchange = e => { Settings.checkins = e.target.value; $('optCheck').
 $('sLevel').onchange = e => { Settings.level = e.target.value; $('optLevel').value = Settings.level; saveSettings(); };
 $('optLevel').onchange = e => { Settings.level = e.target.value; saveSettings(); };
 $('optCheck').onchange = e => { Settings.checkins = e.target.value; saveSettings(); };
+$('sOpenAISave').onclick = () => { Settings.openaiKey = $('sOpenAI').value.trim(); Premium.broken = ''; Premium.cache.clear(); Premium.model = 'gpt-4o-mini-tts'; saveSettings(); renderVoiceUI(); if (Settings.openaiKey) hearTeacher(T()); };
+$('sOpenAIClear').onclick = () => { Settings.openaiKey = ''; $('sOpenAI').value = ''; Premium.broken = ''; saveSettings(); renderVoiceUI(); };
+const onName = v => { Settings.name = String(v || '').slice(0, 30); saveSettings(); applyName(); };
+$('youNameInput').addEventListener('input', e => onName(e.target.value));
+$('sName').addEventListener('input', e => onName(e.target.value));
 $('sTest').onclick = () => {
+  if (Settings.engine === 'premium' && PREMIUM_OK && !Settings.openaiKey){ $('sOpenAI').focus(); return; }
   if (Settings.engine === 'studio' && STUDIO_OK && T().kokoro && !Studio.tts){ Studio.unlock(); Studio.load().then(() => hearTeacher(T())).catch(() => {}); return; }
   hearTeacher(T());
 };
@@ -1813,7 +2048,7 @@ const DEMO = {
     { title: 'Voltage: how high the ladder is', goal: 'Understand voltage as height above ground.', points: ['ground is 0 V', 'battery lifts charge', 'voltage is a difference'],
       content: { title: 'Voltage: how high the ladder is',
         beats: [
-          { say: "Welcome to class! [pause] Today we're learning three words that run every circuit: voltage, current, and resistance. [pause] Okay, let's start at the floor. In a circuit, the floor is called ground, and its height is zero volts.", show: ['s1'] },
+          { say: "Welcome to class, {name}! [pause] Today we're learning three words that run every circuit: voltage, current, and resistance. [pause] Okay, let's start at the floor. In a circuit, the floor is called ground, and its height is zero volts.", show: ['s1'] },
           { say: "Now, picture a ladder standing on that floor. [pause] Every step up the ladder is a little more voltage.", show: ['s2'] },
           { say: "So a nine volt battery is like a ladder nine steps tall. [pause] It lifts charge from ground all the way up to the top step.", show: ['s3'] },
           { say: "Think of each bit of charge as a ball we carry up the ladder. Up high, that ball has energy it wants to spend.", show: ['s4'] },
