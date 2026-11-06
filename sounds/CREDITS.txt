@@ -3,3 +3,7 @@ Creative Commons Attribution 3.0 license (https://creativecommons.org/licenses/b
 Rendered to MP3 by Benjamin Gleitzman's midi-js-soundfonts project
 (https://github.com/gleitz/midi-js-soundfonts, MIT license, see MIDI-JS-SOUNDFONTS-LICENSE.txt).
 Notes were trimmed to each instrument's playing range for Song Builder.
+
+Drum sounds (sounds/drums.json): kick, snare, hi-hat and percussion samples from the
+GoogleChromeLabs web-audio-samples project (mld-drum-sampler demo),
+https://github.com/GoogleChromeLabs/web-audio-samples, Apache License 2.0.
