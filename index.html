@@ -64,6 +64,9 @@ h2{font-size:1.25rem;font-weight:800}
 .tempo button{border:0;background:transparent;width:34px;height:36px;font-size:1.1rem}
 .tempo output{font-family:var(--f-mono);font-variant-numeric:tabular-nums;min-width:2.4ch;text-align:center;font-weight:500}
 .tempo .unit{font-size:.7rem;color:var(--muted);margin-right:2px}
+.meter-badge{font-family:var(--f-mono);border-left:1px solid var(--line);padding-left:6px;margin-left:4px!important}
+.cells{grid-template-columns:repeat(var(--cols,8),minmax(0,1fr))!important}
+.b-slots{grid-template-columns:repeat(var(--cols,8),minmax(0,1fr))!important}
 .now{flex:1 1 160px;min-width:0;font-size:.85rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
 .now b{color:var(--ink)}
 
@@ -266,7 +269,9 @@ footer button{border:0;background:transparent;color:var(--muted);text-decoration
 .library[open] summary::after{transform:rotate(180deg)}
 .lib-body{display:grid;gap:8px;padding:0 12px 12px}
 .lib-body input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 11px;min-height:40px;font-size:16px}
-.lib-list{display:grid;gap:6px;max-height:300px;overflow-y:auto}
+.lib-list{display:grid;gap:6px;max-height:380px;overflow-y:auto}
+.lib-genres{display:flex;flex-wrap:wrap;gap:6px}
+.lib-genres .toggle{min-height:32px;padding:5px 11px;font-size:.8rem}
 .lib-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 11px}
 .lib-item b{font-family:var(--f-display);font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lib-item span{font-size:.8rem;color:var(--muted);grid-column:1}
@@ -297,14 +302,14 @@ body.staged{overflow:hidden}
 
 <header class="transport">
   <div class="t-inner">
-    <span class="brand">Song Builder <small style="font-family:var(--f-mono);font-size:.7rem;font-weight:500;color:var(--muted)">v4</small></span>
+    <span class="brand">Song Builder <small style="font-family:var(--f-mono);font-size:.7rem;font-weight:500;color:var(--muted)">v5</small></span>
     <button id="playBtn" class="play" aria-pressed="false"><span id="playIcon">▶</span><span id="playText">Play song</span></button>
     <button id="loopBtn" class="toggle" aria-pressed="true">Loop</button>
     <button id="clickBtn" class="toggle" aria-pressed="false">Click</button>
     <button class="sing-btn" data-act="stage"><span class="rec-dot"></span>Sing with chords</button>
     <div class="tempo" role="group" aria-label="Tempo">
       <button id="tempoDown" aria-label="Slower">−</button>
-      <output id="tempoOut">88</output><span class="unit">BPM</span>
+      <output id="tempoOut">88</output><span class="unit">BPM</span><span class="unit meter-badge" id="meterBadge">4/4</span>
       <button id="tempoUp" aria-label="Faster">+</button>
     </div>
     <div class="now" id="nowLine">Stopped</div>
@@ -319,6 +324,8 @@ body.staged{overflow:hidden}
           <h2 id="songH">Your song</h2>
           <label class="vh" for="keySel">Key</label>
           <select id="keySel" class="sel"></select>
+          <label class="vh" for="meterSel">Time signature</label>
+          <select id="meterSel" class="sel"><option value="4/4">4/4 · most songs</option><option value="3/4">3/4 · waltz</option><option value="6/8">6/8 · rolling</option><option value="12/8">12/8 · slow soul</option></select>
           <button class="btn" data-act="copy">Copy chart</button>
           <p>Each box is one bar (4 beats). Drag chords into the boxes, or tap a chord and then tap a box. Drag the dots next to a section name to move it.</p>
         </div>
@@ -338,9 +345,11 @@ body.staged{overflow:hidden}
           <summary>Start from a popular song</summary>
           <div class="lib-body">
             <label class="vh" for="libSearch">Search songs</label>
+            <div class="lib-genres" id="libGenres"></div>
             <input type="search" id="libSearch" placeholder="Type a song or artist…" autocomplete="off">
+            <span class="note" id="libCount"></span>
             <div class="lib-list" id="libList"></div>
-            <p class="note">Simple common versions. Some are moved to an easier key (players often use a capo). Loading one replaces your song, and you can undo. Want a song that isn't here? Ask me in chat and I'll add it.</p>
+            <p class="note">Simple common versions. Some are moved to an easier key (players often use a capo). Each song sets its own key, tempo, time signature, instruments and strum. Loading one replaces your song, and you can undo. Want a song that isn't here? Ask me in chat and I'll add it.</p>
           </div>
         </details>
         <div class="tabs" role="tablist">
@@ -368,7 +377,7 @@ body.staged{overflow:hidden}
         <div class="panel-head"><h2 id="strumH">Sound and strum</h2><p>Tap instruments to turn them on or off. All the lit ones play your chords together. Then pick a strum pattern, or build your own.</p></div>
         <div class="instr" id="instr"></div>
         <div class="note" id="bandLine"></div>
-        <div class="lbl">Strum pattern</div>
+        <div class="lbl" id="patLabel">Strum pattern</div>
         <div class="patterns" id="patterns"></div>
         <div class="builder" id="builder" hidden></div>
         <div class="mix-grid" id="mixChords"></div>
@@ -466,19 +475,46 @@ const MAJOR=[0,2,4,5,7,9,11], MINOR=[0,2,3,5,7,8,10];
 const MAJ_KEYS=['C','Db','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
 const MIN_KEYS=['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];
 const SEC_TYPES=[{t:'Intro',c:'intro'},{t:'Verse',c:'verse'},{t:'Pre-Chorus',c:'pre'},{t:'Chorus',c:'chorus'},{t:'Bridge',c:'bridge'},{t:'Outro',c:'outro'}];
+const METERS={'4/4':{beats:4,eighths:8,name:'4/4 · most songs',sizes:[8,16]},'3/4':{beats:3,eighths:6,name:'3/4 · waltz',sizes:[6,12]},
+  '6/8':{beats:2,eighths:6,name:'6/8 · rolling, 2 big beats',sizes:[6,12]},'12/8':{beats:4,eighths:12,name:'12/8 · slow soul, 4 big beats',sizes:[12]}};
+const meterOf = () => METERS[state.meter]||METERS['4/4'];
+const METER_DEFAULT={'4/4':'pop','3/4':'waltzStrum','6/8':'six8strum','12/8':'t8strum'};
 const PATTERNS=[
-  {id:'ring',name:'Let it ring',hint:'One strum, let it ring. Good for slow parts.',steps:['D','-','-','-','-','-','-','-']},
-  {id:'quarters',name:'Steady downs',hint:'Down on every beat.',steps:['D','-','D','-','D','-','D','-']},
-  {id:'pop',name:'Pop strum',hint:'The classic: down, down-up, up-down-up.',steps:['D','-','D','U','-','U','D','U']},
-  {id:'folk',name:'Folk',hint:'Busier and brighter.',steps:['D','-','D','U','D','U','D','U']},
-  {id:'island',name:'Offbeat',hint:'Only the "ands". Reggae feel.',steps:['-','U','-','U','-','U','-','U']},
-  {id:'pick',name:'Fingerpick',hint:'One string at a time, bass note first.',steps:['B',2,3,4,'B2',3,2,4]},
-  {id:'rock8',name:'Driving eighths',hint:'Down on every count. Rock and punk.',steps:['D','D','D','D','D','D','D','D']},
-  {id:'push',name:'Pop push',hint:'Hits on 1, the "and" of 2, and 4. Modern pop.',steps:['D','-','-','D','-','-','D','-']},
+  {m:'4/4',id:'ring',sparse:1,name:'Let it ring',hint:'One strum, let it ring. Good for slow parts.',steps:['D','-','-','-','-','-','-','-']},
+  {m:'4/4',id:'quarters',name:'Steady downs',hint:'Down on every beat.',steps:['D','-','D','-','D','-','D','-']},
+  {m:'4/4',id:'pop',name:'Pop strum',hint:'The classic: down, down-up, up-down-up.',steps:['D','-','D','U','-','U','D','U']},
+  {m:'4/4',id:'folk',name:'Folk',hint:'Busier and brighter.',steps:['D','-','D','U','D','U','D','U']},
+  {m:'4/4',id:'island',name:'Offbeat',hint:'Only the "ands". Reggae feel.',steps:['-','U','-','U','-','U','-','U']},
+  {m:'4/4',id:'pick',name:'Fingerpick',hint:'One string at a time, bass note first.',steps:['B',2,3,4,'B2',3,2,4]},
+  {m:'4/4',id:'rock8',name:'Driving eighths',hint:'Down on every count. Rock, or steady piano.',steps:['D','D','D','D','D','D','D','D']},
+  {m:'4/4',id:'push',name:'Pop push',hint:'Hits on 1, the "and" of 2, and 4. Modern pop.',steps:['D','-','-','D','-','-','D','-']},
+  {m:'4/4',id:'strum16',name:'Busy strum',hint:'Pop strum at double speed. Makes slow songs move.',steps:['D','-','D','U','-','U','D','U','D','-','D','U','-','U','D','U']},
+  {m:'4/4',id:'pick16',name:'Flowing fingerpick',hint:'Fast rolling picking. Great for slow ballads.',steps:['B',2,3,4,3,2,3,4,'B2',2,3,4,3,2,3,4]},
+  {m:'3/4',id:'waltz',name:'Oom-pah-pah',hint:'Bass on 1, chord on 2 and 3. Classic waltz.',steps:['B','-','D','-','D','-']},
+  {m:'3/4',id:'waltzStrum',name:'Waltz strum',hint:'Down, down-up, down-up.',steps:['D','-','D','U','D','U']},
+  {m:'3/4',id:'sway',name:'Slow sway',hint:'Down … up-down. Slow soul and country.',steps:['D','-','-','U','D','-']},
+  {m:'3/4',id:'waltzPick',name:'Waltz picking',hint:'One string at a time.',steps:['B',2,3,4,3,2]},
+  {m:'3/4',id:'waltzPick12',name:'Busy waltz picking',hint:'Twice as many notes. Keeps slow waltzes moving.',steps:['B',2,3,4,3,2,'B2',2,3,4,3,2]},
+  {m:'6/8',id:'six8strum',name:'6/8 strum',hint:'Down down up, down down up.',steps:['D','D','U','D','D','U']},
+  {m:'6/8',id:'six8pick',name:'6/8 picking',hint:'Rolling arpeggio, like House of the Rising Sun.',steps:['B',2,3,4,3,2]},
+  {m:'6/8',id:'six8ring',sparse:1,name:'Two big strums',hint:'One strum on each big beat.',steps:['D','-','-','D','-','-']},
+  {m:'6/8',id:'six8pick12',name:'Busy 6/8 picking',hint:'Double-speed picking for very slow songs.',steps:['B',2,3,4,3,2,'B2',2,3,4,3,2]},
+  {m:'12/8',id:'t8strum',name:'Triplet strum',hint:'Down down up on every beat. Big ballads.',steps:['D','D','U','D','D','U','D','D','U','D','D','U']},
+  {m:'12/8',id:'t8soul',name:'Soul triplets',hint:'Down … up on every beat. Old-school soul.',steps:['D','-','U','D','-','U','D','-','U','D','-','U']},
+  {m:'12/8',id:'t8pick',name:'Triplet picking',hint:'Rolling arpeggio, three notes per beat.',steps:['B',2,3,4,3,2,'B2',2,3,4,3,2]},
+  {m:'12/8',id:'t8ring',sparse:1,name:'Steady beats',hint:'One strum on each big beat.',steps:['D','-','-','D','-','-','D','-','-','D','-','-']},
 ];
 const STROKES=[{v:'D',sym:'↓',name:'Down strum'},{v:'U',sym:'↑',name:'Up strum'},{v:'-',sym:'·',name:'Rest'},{v:'B',sym:'B',name:'Bass note'},{v:'B2',sym:'B2',name:'2nd bass note'},{v:1,sym:'1',name:'String 1 (lowest top string)'},{v:2,sym:'2',name:'String 2'},{v:3,sym:'3',name:'String 3'},{v:4,sym:'4',name:'String 4 (highest)'}];
 const strokeSym = v => (STROKES.find(x=>String(x.v)===String(v))||STROKES[2]).sym;
 const getPattern = id => PATTERNS.concat(state.myPatterns||[]).find(p=>p.id===id)||PATTERNS[2];
+const patMeter = p => p.m||'4/4';
+const patternsFor = m => PATTERNS.concat(state.myPatterns||[]).filter(p=>patMeter(p)===m);
+function countLabels(L){ const m=state.meter;
+  if(m==='4/4') return L===16?['1','e','&','a','2','e','&','a','3','e','&','a','4','e','&','a']:['1','&','2','&','3','&','4','&'];
+  if(m==='3/4') return L===12?['1','e','&','a','2','e','&','a','3','e','&','a']:['1','&','2','&','3','&'];
+  if(m==='6/8') return L===12?['1','&','2','&','3','&','4','&','5','&','6','&']:['1','2','3','4','5','6'];
+  return ['1','la','li','2','la','li','3','la','li','4','la','li']; }
+const isBeatStep = (i,L) => i%(L/meterOf().beats)===0;
 
 function parseChord(name){
   const m=/^([A-G](?:#|b)?)(.*)$/.exec(name||''); if(!m) return null;
@@ -510,7 +546,7 @@ function harmonyStep(m, steps){ // move by scale steps inside the key
 /* ---------- state ---------- */
 const STORE='song-builder-v1';
 const DEFAULT_BANK=['G','C','D','Em','Am','F','Bm','A','E','Dm'];
-const exampleSong = () => ({key:{tonic:7,minor:false},tempo:88,band:['acoustic'],pattern:'pop',loop:true,click:false,example:true,
+const exampleSong = () => ({key:{tonic:7,minor:false},tempo:88,meter:'4/4',band:['acoustic'],pattern:'pop',loop:true,click:false,example:true,
   bank:[...DEFAULT_BANK],trayMode:'key',trayBig:false,myPatterns:[],
   chordVol:0.8,voiceVol:1,chordShift:0,voiceShift:0,
   sections:[{id:'s1',type:'Verse',bars:['G','D','Em','C']},{id:'s2',type:'Pre-Chorus',bars:['Am','C','D','D']},
@@ -521,6 +557,7 @@ if(!Array.isArray(state.band)) state.band=[state.instrument||'acoustic'];
 delete state.instrument;
 if(!Array.isArray(state.bank)) state.bank=[...DEFAULT_BANK];
 if(!Array.isArray(state.myPatterns)) state.myPatterns=[];
+if(!METERS[state.meter]) state.meter='4/4';
 let saveT=null;
 function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{ localStorage.setItem(STORE,JSON.stringify(state)); }catch(e){} },200); }
 function edited(){ if(state.example){ state.example=false; $('#exampleBanner').hidden=true; } save(); }
@@ -652,7 +689,7 @@ const INSTR=[
   {id:'drums',name:'Drums',level:0.85,lp:14000,kind:'drums'},
 ];
 const instById = id => INSTR.find(i=>i.id===id)||INSTR[0];
-function playInst(id,name,t,step,vel,barStart,si,preview){
+function playInst(id,name,t,step,vel,barStart,si,preview,L){
   const S=state.chordShift|0, bus=busFor(id), P=id+':';
   if(id==='acoustic'||id==='electric'||id==='rock'||id==='uke'){
     const kind=id==='acoustic'?'warm':id==='uke'?'uke':'bright';
@@ -678,14 +715,16 @@ function playInst(id,name,t,step,vel,barStart,si,preview){
     holdChord(id,id==='strings'?v.slice(1).map(m=>m+12):v,t,preview?1.4:barDur(),bus); return;
   }
   if(id==='bass'){
-    if(!(si===0||si===4||(preview&&barStart))) return; const ch=parseChord(name); if(!ch) return;
-    const m=33+((ch.root+S-9+24)%12); pluck(ksBuf(m,'bass'),t,si===0?1:0.85,P+'b',bus); return;
+    const M=meterOf(); let hit=preview&&barStart, acc=1;
+    if(!hit&&si!=null&&L){ const spb=L/M.beats; if(si%spb===0){ const b=si/spb; hit=b===0||(M.beats===4&&b===2)||(state.meter==='6/8'&&b===1); acc=b===0?1:0.85; } }
+    if(!hit) return; const ch=parseChord(name); if(!ch) return;
+    const m=33+((ch.root+S-9+24)%12); pluck(ksBuf(m,'bass'),t,acc,P+'b',bus); return;
   }
-  if(id==='drums'&&!preview&&si!=null){
-    if(state.pattern==='ring'){ if(si===0) kick(t,bus); return; }
-    if(si===0||si===4) kick(t,bus);
-    if(si===2||si===6) snare(t,bus);
-    hat(t,bus,si%2===0?0.5:0.3);
+  if(id==='drums'&&!preview&&si!=null&&L){
+    const M=meterOf(), spb=L/M.beats, onBeat=si%spb===0, b=si/spb;
+    if(getPattern(state.pattern).sparse){ if(si===0) kick(t,bus); return; }
+    if(onBeat){ if(state.meter==='3/4'){ if(b===0) kick(t,bus); else snare(t,bus,0.45); } else if(b%2===0) kick(t,bus); else snare(t,bus,1); }
+    const per=Math.max(1,L/M.eighths); if(si%per===0) hat(t,bus,onBeat?0.5:0.3);
   }
 }
 function holdChord(kind,ms,t,dur,dest){
@@ -705,16 +744,16 @@ let noiseBuf=null;
 function noise(){ if(!noiseBuf){ const n=ctx.sampleRate; noiseBuf=ctx.createBuffer(1,n,ctx.sampleRate); const d=noiseBuf.getChannelData(0); for(let i=0;i<n;i++) d[i]=Math.random()*2-1; } return noiseBuf; }
 function kick(t,dest){ const o=ctx.createOscillator(), g=ctx.createGain(); o.frequency.setValueAtTime(140,t); o.frequency.exponentialRampToValueAtTime(45,t+0.12);
   g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.9,t+0.004); g.gain.exponentialRampToValueAtTime(0.0001,t+0.35); o.connect(g); g.connect(dest); o.start(t); o.stop(t+0.4); }
-function snare(t,dest){ const s=ctx.createBufferSource(); s.buffer=noise(); const f=ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1800; f.Q.value=0.8;
-  const g=ctx.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.55,t+0.003); g.gain.exponentialRampToValueAtTime(0.0001,t+0.18);
+function snare(t,dest,v){ v=v==null?1:v; const s=ctx.createBufferSource(); s.buffer=noise(); const f=ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1800; f.Q.value=0.8;
+  const g=ctx.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.55*v,t+0.003); g.gain.exponentialRampToValueAtTime(0.0001,t+0.18);
   s.connect(f); f.connect(g); g.connect(dest); s.start(t,Math.random()*0.5); s.stop(t+0.2);
-  const o=ctx.createOscillator(), og=ctx.createGain(); o.frequency.value=190; og.gain.setValueAtTime(0.3,t); og.gain.exponentialRampToValueAtTime(0.0001,t+0.09); o.connect(og); og.connect(dest); o.start(t); o.stop(t+0.1); }
+  const o=ctx.createOscillator(), og=ctx.createGain(); o.frequency.value=190; og.gain.setValueAtTime(0.3*v,t); og.gain.exponentialRampToValueAtTime(0.0001,t+0.09); o.connect(og); og.connect(dest); o.start(t); o.stop(t+0.1); }
 function hat(t,dest,v){ const s=ctx.createBufferSource(); s.buffer=noise(); const f=ctx.createBiquadFilter(); f.type='highpass'; f.frequency.value=7500;
   const g=ctx.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(v*0.35,t+0.002); g.gain.exponentialRampToValueAtTime(0.0001,t+0.05);
   s.connect(f); f.connect(g); g.connect(dest); s.start(t,Math.random()*0.5); s.stop(t+0.06); }
-function playStep(name,t,step,vel,barStart,si,preview){
+function playStep(name,t,step,vel,barStart,si,preview,L){
   if(!state.band.length) return;
-  state.band.forEach(id=>playInst(id,name,t,step,vel,barStart,si,preview));
+  state.band.forEach(id=>playInst(id,name,t,step,vel,barStart,si,preview,L));
 }
 function clickAt(t,acc){
   const o=ctx.createOscillator(); o.frequency.value=acc?1760:1320; const g=ctx.createGain();
@@ -733,8 +772,8 @@ function previewStroke(st){ ensureCtx(); const chord=previewChordName(); playSte
 function previewNote(m){ ensureCtx(); pluck(pianoBuf(m),ctx.currentTime+0.01,0.9,'kb'+m,chordGain); }
 
 /* ---------- transport / scheduler ---------- */
-const stepDur = () => 60/state.tempo/2;
-const barDur = () => stepDur()*8;
+const barDur = () => meterOf().beats*60/state.tempo;
+const stepDur = (L) => barDur()/(L||8);
 let play=null; const uiQueue=[];
 function buildSeq(secId){ const secs=secId?state.sections.filter(s=>s.id===secId):state.sections; const out=[];
   secs.forEach(s=>s.bars.forEach((c,i)=>out.push({sec:s.id,idx:i,chord:c}))); return out; }
@@ -751,11 +790,12 @@ function tick(){
   while(play.next<ctx.currentTime+0.15){
     const it=play.seq[play.bar], t=play.next;
     if(play.step===0) uiQueue.push({t,sec:it.sec,idx:it.idx,chord:it.chord});
-    if(state.click&&play.step%2===0) clickAt(t,play.step===0);
+    const L=pat.steps.length;
+    if(state.click&&isBeatStep(play.step,L)) clickAt(t,play.step===0);
     const st=pat.steps[play.step];
-    if(it.chord) playStep(it.chord,t,st,play.step===0?1:0.8,play.step===0,play.step);
-    play.next+=stepDur(); play.step++;
-    if(play.step===8){ play.step=0; play.bar++;
+    if(it.chord) playStep(it.chord,t,st,play.step===0?1:(isBeatStep(play.step,L)?0.85:0.75),play.step===0,play.step,false,L);
+    play.next+=stepDur(L); play.step++;
+    if(play.step>=L){ play.step=0; play.bar++;
       if(play.bar>=play.seq.length){ if(state.loop) play.bar=0; else { play.endAt=play.next+0.6; break; } } }
   }
 }
@@ -899,27 +939,31 @@ function renderBuild(){
 const COUNTS=['1','&','2','&','3','&','4','&'];
 const parseStroke = v => /^\d$/.test(String(v))?+v:v;
 const strokeName = v => (STROKES.find(x=>String(x.v)===String(v))||STROKES[2]).name;
+const colsFor = L => L>8?L/2:L;
 function patCard(p){
+  const L=p.steps.length, C=countLabels(L);
   return `<button class="pat" data-act="pattern" data-pat="${p.id}" aria-pressed="${state.pattern===p.id}">
     <span class="pat-name">${esc(p.name)}</span>
-    <span class="cells" aria-hidden="true">${p.steps.map((x,i)=>`<span class="${x!=='-'?'on':''} ${i%2===0?'beat':''}">${strokeSym(x)}<em>${COUNTS[i]}</em></span>`).join('')}</span>
+    <span class="cells" aria-hidden="true" style="--cols:${colsFor(L)}">${p.steps.map((x,i)=>`<span class="${x!=='-'?'on':''} ${isBeatStep(i,L)?'beat':''}">${strokeSym(x)}<em>${C[i]||''}</em></span>`).join('')}</span>
     <span class="pat-hint">${esc(p.hint)}</span></button>`;
 }
 function renderStrum(){
   $('#instr').innerHTML=INSTR.map(i=>`<button class="toggle" data-act="instr" data-instr="${i.id}" aria-pressed="${state.band.includes(i.id)}">${i.name}</button>`).join('');
   $('#bandLine').textContent=state.band.length?`Playing: ${state.band.map(id=>instById(id).name).join(' + ')}`:'All instruments are off.';
   const cur=getPattern(state.pattern), mine=String(cur.id).startsWith('my');
-  $('#patterns').innerHTML=PATTERNS.concat(state.myPatterns).map(patCard).join('')
+  $('#patLabel').textContent=`Strum pattern · ${state.meter} time`;
+  $('#patterns').innerHTML=patternsFor(state.meter).map(patCard).join('')
     +`<button class="pat new-pat" data-act="builder-open" data-new="1"><span class="pat-name">＋ Make my own</span><span class="pat-hint">Drag strums into one bar to build your own pattern. Starts from the one you picked.</span></button>`
     +(mine?`<button class="pat new-pat" data-act="builder-open"><span class="pat-name">✎ Edit "${esc(cur.name)}"</span><span class="pat-hint">Change or delete your pattern.</span></button>`:'');
   renderBuilder();
 }
 function renderBuilder(){
   const b=$('#builder'); b.hidden=!ui.builder; if(!ui.builder) return;
-  const st=ui.bSteps;
-  b.innerHTML=`<div class="b-head"><b>${ui.bEditing?'Editing "'+esc(getPattern(ui.bEditing).name)+'"':'Build a strum pattern'}</b>
-      <span class="note">One bar = 8 boxes (1 & 2 & 3 & 4 &). Drag a strum into a box, or tap a strum and then tap boxes. Tap a filled box to clear it.</span></div>
-    <div class="b-slots">${st.map((v,i)=>`<div class="b-slot${i%2===0?' beat':''}" data-drop="slot" data-slot="${i}">${v!=='-'?`<span class="stroke in-slot" data-drag="slotstroke" data-slot="${i}" data-stroke="${v}" role="button" tabindex="0" aria-label="${esc(strokeName(v))} on count ${COUNTS[i]}">${strokeSym(v)}</span>`:'<span class="b-empty">·</span>'}<em>${COUNTS[i]}</em></div>`).join('')}</div>
+  const st=ui.bSteps, L=st.length, C=countLabels(L), sizes=meterOf().sizes;
+  b.innerHTML=`<div class="b-head"><b>${ui.bEditing?'Editing "'+esc(getPattern(ui.bEditing).name)+'"':'Build a strum pattern'} · ${state.meter}</b>
+      <span class="note">One bar = ${L} boxes (${C.join(' ')}). Drag a strum into a box, or tap a strum and then tap boxes. Tap a filled box to clear it.</span></div>
+    ${sizes.length>1?`<div class="mix-actions"><span class="lbl">Boxes per bar</span>${sizes.map(n=>`<button class="toggle" data-act="b-size" data-size="${n}" aria-pressed="${L===n}">${n}${n>sizes[0]?' (busier)':''}</button>`).join('')}</div>`:''}
+    <div class="b-slots" style="--cols:${colsFor(L)}">${st.map((v,i)=>`<div class="b-slot${isBeatStep(i,L)?' beat':''}" data-drop="slot" data-slot="${i}">${v!=='-'?`<span class="stroke in-slot" data-drag="slotstroke" data-slot="${i}" data-stroke="${v}" role="button" tabindex="0" aria-label="${esc(strokeName(v))} on count ${C[i]}">${strokeSym(v)}</span>`:'<span class="b-empty">·</span>'}<em>${C[i]}</em></div>`).join('')}</div>
     <div class="b-pal">${STROKES.map(x=>`<span class="stroke${ui.armedStroke!=null&&String(ui.armedStroke)===String(x.v)?' armed':''}" data-drag="stroke" data-stroke="${x.v}" role="button" tabindex="0" aria-label="${esc(x.name)}">${x.sym}<small>${{D:'down',U:'up','-':'rest',B:'bass',B2:'bass 2'}[x.v]||'string'}</small></span>`).join('')}</div>
     <p class="note">↓ ↑ strum the whole chord. B and B2 are bass notes. 1 to 4 pick one string, low to high, for fingerpicking. Piano follows too: ↓ plays the full chord, ↑ the top notes.</p>
     <div class="mix-actions"><button class="btn" data-act="b-play">▶ Hear it</button><button class="btn primary" data-act="b-save">${ui.bEditing?'Save changes':'Save pattern'}</button><button class="btn" data-act="b-clear">Clear</button>${ui.bEditing?'<button class="btn" data-act="b-delete">Delete</button>':''}<button class="btn" data-act="b-close">Close</button></div>`;
@@ -928,7 +972,7 @@ const previewChordName = () => ui.armed||state.sections.flatMap(x=>x.bars).find(
 function previewPattern(steps,bars){
   if(play) return; ensureCtx(); silence();
   const chord=previewChordName(), st=steps||getPattern(state.pattern).steps; let t=ctx.currentTime+0.06;
-  for(let b=0;b<(bars||1);b++) st.forEach((x,i)=>{ playStep(chord,t,x,i===0?1:0.8,i===0,i,false); t+=stepDur(); });
+  const L=st.length; for(let b=0;b<(bars||1);b++) st.forEach((x,i)=>{ playStep(chord,t,x,i===0?1:(isBeatStep(i,L)?0.85:0.75),i===0,i,false,L); t+=stepDur(L); });
   setLit(parseChord(chord).pcs);
 }
 
@@ -1072,16 +1116,18 @@ function act(a){
     case 'bank-add': bankAdd(a.dataset.chord); break;
     case 'bank-add-armed': bankAdd(ui.armed); break;
     case 'bank-reset': { const old=[...state.bank]; state.bank=[...DEFAULT_BANK]; save(); renderBankPane(); renderTray(); renderArmed(); toast('Bank reset.','Undo',()=>{ state.bank=old; save(); renderBankPane(); renderTray(); renderArmed(); }); break; }
+    case 'b-size': { const n=+a.dataset.size, old=ui.bSteps, L=old.length; if(n===L) break;
+      ui.bSteps=n>L?old.flatMap(x=>[x,...new Array(n/L-1).fill('-')]):old.filter((_,i)=>i%(L/n)===0); renderBuilder(); break; }
     case 'builder-open': { const cur=getPattern(state.pattern); ui.builder=true; ui.armedStroke=null; ui.bSteps=[...cur.steps].map(parseStroke);
       ui.bEditing=(!a.dataset.new&&String(cur.id).startsWith('my'))?cur.id:null; renderStrum(); $('#builder').scrollIntoView({behavior:'smooth',block:'center'}); break; }
     case 'b-play': previewPattern(ui.bSteps,2); break;
     case 'b-clear': ui.bSteps=new Array(8).fill('-'); renderBuilder(); break;
     case 'b-close': ui.builder=false; renderStrum(); break;
     case 'b-save': { if(!ui.bSteps.some(x=>x!=='-')){ toast('Add at least one strum first.'); break; }
-      if(ui.bEditing){ getPattern(ui.bEditing).steps=[...ui.bSteps]; state.pattern=ui.bEditing; }
-      else { const n=state.myPatterns.length+1, id='my'+Date.now().toString(36); state.myPatterns.push({id,name:'My pattern '+n,hint:'Your own pattern.',steps:[...ui.bSteps]}); state.pattern=id; }
+      if(ui.bEditing){ const pe=getPattern(ui.bEditing); pe.steps=[...ui.bSteps]; pe.m=state.meter; state.pattern=ui.bEditing; }
+      else { const n=state.myPatterns.length+1, id='my'+Date.now().toString(36); state.myPatterns.push({id,m:state.meter,name:'My pattern '+n,hint:`Your own ${state.meter} pattern.`,steps:[...ui.bSteps]}); state.pattern=id; }
       ui.builder=false; save(); renderStrum(); toast(`Saved "${getPattern(state.pattern).name}". It's now playing in your song.`); break; }
-    case 'b-delete': { const id=ui.bEditing; state.myPatterns=state.myPatterns.filter(x=>x.id!==id); if(state.pattern===id) state.pattern='pop'; ui.builder=false; save(); renderStrum(); toast('Pattern deleted.'); break; }
+    case 'b-delete': { const id=ui.bEditing; state.myPatterns=state.myPatterns.filter(x=>x.id!==id); if(state.pattern===id) state.pattern=METER_DEFAULT[state.meter]; ui.builder=false; save(); renderStrum(); toast('Pattern deleted.'); break; }
     case 'pattern': state.pattern=a.dataset.pat; save(); renderStrum(); previewPattern(); break;
     case 'blank': state.sections=[{id:newId(),type:'Verse',bars:['','','','']},{id:newId(),type:'Chorus',bars:['','','','']}]; edited(); renderSong(); break;
     case 'reset': stopPlay(); state=exampleSong(); save(); renderAll(); toast('Back to the example song.'); break;
@@ -1091,6 +1137,7 @@ function act(a){
     case 'play-rec-chords': openStage(); startStagePlayback(); break;
     case 'stage': openStage(); break;
     case 'load-song': loadSong(+a.dataset.song); break;
+    case 'lib-genre': ui.libGenre=a.dataset.genre; renderLibrary(); break;
     case 'preview-mix': previewPattern(); break;
   }
 }
@@ -1098,11 +1145,14 @@ document.addEventListener('change',e=>{
   const t=e.target;
   if(t.dataset.change==='type'){ secById(t.dataset.sec).type=t.value; edited(); renderSong(); }
   if(t.id==='keySel'){ const [tn,mn]=t.value.split(':'); state.key={tonic:+tn,minor:mn==='1'}; edited(); renderPalette(); renderVoiceStats(); drawChart(); document.querySelectorAll('[data-val="chordShift"]').forEach(el=>el.textContent=ctlValueText('chordShift')); }
+  if(t.id==='meterSel') setTimeSig(t.value);
   if(t.id==='fileIn'&&t.files[0]) loadFile(t.files[0]);
 });
 $('#playBtn').addEventListener('click',()=>{ if(play) stopPlay(); else startPlay(null); });
 $('#loopBtn').addEventListener('click',()=>{ state.loop=!state.loop; $('#loopBtn').setAttribute('aria-pressed',state.loop); save(); });
 $('#clickBtn').addEventListener('click',()=>{ state.click=!state.click; $('#clickBtn').setAttribute('aria-pressed',state.click); save(); });
+function renderMeter(){ $('#meterSel').value=state.meter; $('#meterBadge').textContent=state.meter; $('#meterBadge').title=meterOf().name; }
+function setTimeSig(m){ if(!METERS[m]) return; state.meter=m; if(patMeter(getPattern(state.pattern))!==m) state.pattern=METER_DEFAULT[m]; ui.builder=false; edited(); renderMeter(); renderStrum(); }
 function setTempo(v){ state.tempo=Math.max(50,Math.min(180,v)); $('#tempoOut').textContent=state.tempo; save(); }
 $('#tempoDown').addEventListener('click',()=>setTempo(state.tempo-2));
 $('#tempoUp').addEventListener('click',()=>setTempo(state.tempo+2));
@@ -1120,7 +1170,7 @@ function toast(msg,actLabel,fn){
 }
 function copyChart(){
   const pat=getPattern(state.pattern), ins=state.band.map(id=>instById(id).name).join(' + ')||'no instruments';
-  const text=[`Key: ${keyName(state.key)} | ${state.tempo} BPM | ${ins} | ${pat.name} (${pat.steps.map(strokeSym).join(' ')})`,...state.sections.map(s=>`${sectionLabel(s)}: ${s.bars.map(b=>b||'—').join(' | ')}`)].join('\n');
+  const text=[`Key: ${keyName(state.key)} | ${state.meter} | ${state.tempo} BPM | ${ins} | ${pat.name} (${pat.steps.map(strokeSym).join(' ')})`,...state.sections.map(s=>`${sectionLabel(s)}: ${s.bars.map(b=>b||'—').join(' | ')}`)].join('\n');
   const fallback=()=>{ const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); toast('Chord chart copied.'); }catch(e){ toast('Could not copy. Long-press to copy instead.'); } ta.remove(); };
   try{ navigator.clipboard.writeText(text).then(()=>toast('Chord chart copied. Paste it to me anytime.'),fallback); }catch(e){ fallback(); }
 }
@@ -1383,42 +1433,117 @@ function frame(){
 
 
 /* ---------- popular songs ---------- */
+/* g: genre · k: [key note, minor?] · m: time signature (4/4 unless given; checked for the 3/4, 6/8 and 12/8 ones) · bpm: in 6/8 and 12/8 this counts the big beats */
 const SONGS=[
-  {t:'Let It Be',band:['piano','organ','bass'],pat:'quarters',a:'The Beatles',k:[0,0],bpm:72,s:[['Verse','C G Am F C G F C'],['Chorus','Am G F C C G F C'],['Verse','C G Am F C G F C'],['Chorus','Am G F C C G F C']]},
-  {t:'Hey Jude',band:['piano','bass'],pat:'quarters',a:'The Beatles',k:[5,0],bpm:74,s:[['Verse','F C C7 F Bb F C F'],['Verse','F C C7 F Bb F C F'],['Outro','F Eb Bb F F Eb Bb F']]},
-  {t:'Stand By Me',band:['bass','acoustic','strings','drums'],pat:'quarters',a:'Ben E. King',k:[7,0],bpm:118,s:[['Verse','G G Em Em C D G G'],['Chorus','G G Em Em C D G G']]},
-  {t:'Hallelujah',band:['electric'],pat:'pick',a:'Leonard Cohen',k:[0,0],bpm:56,s:[['Verse','C Am C Am F G C G'],['Pre-Chorus','C F G Am F G E Am'],['Chorus','F Am F C G C G C']]},
-  {t:"Can't Help Falling in Love",band:['piano','strings'],pat:'ring',a:'Elvis Presley',k:[0,0],bpm:66,s:[['Verse','C Em Am Am F C G G'],['Verse','F G Am F C G C C'],['Bridge','Em B7 Em B7 Em A7 Dm G']]},
-  {t:'Imagine',band:['piano','bass'],pat:'quarters',a:'John Lennon',k:[0,0],bpm:76,s:[['Verse','C Cmaj7 F F C Cmaj7 F F'],['Pre-Chorus','F Am Dm F G G G7 G7'],['Chorus','F G C E7 F G C E7']]},
-  {t:'Someone Like You',band:['piano'],pat:'pick',a:'Adele',k:[9,0],bpm:67,s:[['Verse','A C#m F#m D A C#m F#m D'],['Pre-Chorus','E F#m D D E F#m D E'],['Chorus','A E F#m D A E F#m D']]},
-  {t:'Perfect',band:['acoustic','strings'],pat:'pop',a:'Ed Sheeran',k:[7,0],bpm:63,s:[['Verse','G Em C D G Em C D'],['Pre-Chorus','Em C G D Em C G D'],['Chorus','Em C G D Em C D D']]},
-  {t:'Shape of You',band:['marimba','bass','drums'],pat:'push',a:'Ed Sheeran',k:[1,1],bpm:96,s:[['Verse','C#m F#m A B C#m F#m A B'],['Chorus','C#m F#m A B C#m F#m A B']]},
-  {t:'Wonderwall',band:['acoustic','bass','drums'],pat:'folk',a:'Oasis',k:[4,1],bpm:87,s:[['Verse','Em G D A Em G D A'],['Pre-Chorus','C D Em Em C D A A'],['Chorus','C Em G Em C Em G Em']]},
-  {t:"I'm Yours",band:['acoustic','bass','drums'],pat:'island',a:'Jason Mraz',k:[0,0],bpm:75,s:[['Verse','C G Am F C G Am F'],['Chorus','C G Am F C G Am F']]},
-  {t:'Viva la Vida',band:['strings','bass','drums'],pat:'rock8',a:'Coldplay',k:[8,0],bpm:138,s:[['Verse','Db Eb Ab Fm Db Eb Ab Fm'],['Chorus','Db Eb Ab Fm Db Eb Ab Fm']]},
-  {t:'Zombie',band:['rock','bass','drums'],pat:'rock8',a:'The Cranberries',k:[4,1],bpm:84,s:[['Verse','Em C G D Em C G D'],['Chorus','Em C G D Em C G D']]},
-  {t:"Knockin' on Heaven's Door",band:['acoustic','organ','bass'],pat:'pop',a:'Bob Dylan',k:[7,0],bpm:69,s:[['Verse','G D Am Am G D C C'],['Chorus','G D Am Am G D C C']]},
-  {t:'Brown Eyed Girl',band:['electric','bass','drums'],pat:'folk',a:'Van Morrison',k:[7,0],bpm:150,s:[['Intro','G C G D'],['Verse','G C G D G C G D'],['Pre-Chorus','C D G Em C D G D'],['Chorus','G C G D G C G D']]},
-  {t:'Take Me Home, Country Roads',band:['acoustic','bass'],pat:'folk',a:'John Denver',k:[7,0],bpm:82,s:[['Verse','G Em D C G D C G'],['Chorus','G D Em C G D C G'],['Bridge','Em D G G C G D D']]},
-  {t:'Leaving on a Jet Plane',band:['acoustic'],pat:'pick',a:'John Denver',k:[7,0],bpm:96,s:[['Verse','G C G C G C D D'],['Chorus','G C G C G C D D']]},
-  {t:'Wagon Wheel',band:['acoustic','bass','drums'],pat:'folk',a:'Old Crow Medicine Show',k:[7,0],bpm:146,s:[['Verse','G D Em C G D C C'],['Chorus','G D Em C G D C C']]},
-  {t:'No Woman, No Cry',band:['organ','electric','bass','drums'],pat:'island',a:'Bob Marley',k:[0,0],bpm:78,s:[['Verse','C G Am F C F C G'],['Chorus','C G Am F C F C G']]},
-  {t:'A Horse with No Name',band:['acoustic','bass'],pat:'folk',a:'America',k:[4,1],bpm:122,s:[['Verse','Em D Em D Em D Em D'],['Chorus','Em D Em D Em D Em D']]},
+  // ---- Pop
+  {t:'Perfect',a:'Ed Sheeran',g:'Pop',k:[7,0],bpm:63,m:'12/8',band:['acoustic','piano','strings'],pat:'t8strum',s:[['Verse','G Em C D G Em C D'],['Pre-Chorus','Em C G D Em C D D'],['Chorus','G Em C D G Em C D']]},
+  {t:'Shape of You',a:'Ed Sheeran',g:'Pop',k:[1,1],bpm:96,band:['marimba','bass','drums'],pat:'push',s:[['Verse','C#m F#m A B C#m F#m A B'],['Chorus','C#m F#m A B C#m F#m A B']]},
+  {t:'Photograph',a:'Ed Sheeran',g:'Pop',k:[4,0],bpm:108,band:['acoustic','piano'],pat:'pick',s:[['Verse','E B C#m A E B C#m A'],['Chorus','E B C#m A E B C#m A']]},
+  {t:'Thinking Out Loud',a:'Ed Sheeran',g:'Pop',k:[2,0],bpm:79,band:['electric','bass','drums'],pat:'strum16',s:[['Verse','D D G A D D G A'],['Chorus','Em A D D Em A D D']]},
+  {t:'Someone You Loved',a:'Lewis Capaldi',g:'Pop',k:[1,0],bpm:110,band:['piano','strings'],pat:'quarters',s:[['Verse','Db Ab Bbm Gb Db Ab Bbm Gb'],['Chorus','Db Ab Bbm Gb Db Ab Bbm Gb']]},
+  {t:'All of Me',a:'John Legend',g:'Pop',k:[8,0],bpm:63,band:['piano'],pat:'rock8',s:[['Verse','Fm Db Ab Eb Fm Db Ab Eb'],['Chorus','Ab Fm Db Eb Ab Fm Db Eb']]},
+  {t:'Someone Like You',a:'Adele',g:'Pop',k:[9,0],bpm:67,band:['piano'],pat:'pick16',s:[['Verse','A C#m F#m D A C#m F#m D'],['Pre-Chorus','E F#m D D E F#m D E'],['Chorus','A E F#m D A E F#m D']]},
+  {t:'Rolling in the Deep',a:'Adele',g:'Pop',k:[0,1],bpm:105,band:['piano','bass','drums'],pat:'rock8',s:[['Verse','Cm Cm Gm Gm Bb Bb Bb Bb'],['Pre-Chorus','Ab Bb Ab Bb'],['Chorus','Cm Bb Ab Bb Cm Bb Ab Bb']]},
+  {t:'Hello',a:'Adele',g:'Pop',k:[5,1],bpm:79,band:['piano','strings'],pat:'rock8',s:[['Verse','Fm Db Ab Eb Fm Db Ab Eb'],['Chorus','Fm Db Ab Eb Fm Db Ab Eb']]},
+  {t:'Make You Feel My Love',a:'Adele (Bob Dylan)',g:'Pop',k:[0,0],bpm:72,band:['piano'],pat:'pick16',s:[['Verse','C G Bb F Fm C D G']]},
+  {t:'Halo',a:'Beyoncé',g:'Pop',k:[9,0],bpm:80,band:['piano','bass','drums'],pat:'rock8',s:[['Verse','A Bm D D A Bm D D'],['Chorus','A Bm F#m D A Bm F#m D']]},
+  {t:'Just the Way You Are',a:'Bruno Mars',g:'Pop',k:[5,0],bpm:109,band:['piano','bass','drums'],pat:'rock8',s:[['Verse','F Dm Bb F F Dm Bb F'],['Chorus','F Dm Bb F F Dm Bb F']]},
+  {t:'Uptown Funk',a:'Mark Ronson ft. Bruno Mars',g:'Pop',k:[2,1],bpm:115,band:['electric','bass','drums'],pat:'strum16',s:[['Verse','Dm G Dm G'],['Chorus','Dm G Dm G']]},
+  {t:'Blinding Lights',a:'The Weeknd',g:'Pop',k:[5,1],bpm:171,band:['pad','bass','drums'],pat:'rock8',s:[['Verse','Fm Cm Eb Bb'],['Chorus','Fm Cm Eb Bb']]},
+  {t:'Royals',a:'Lorde',g:'Pop',k:[2,0],bpm:85,band:['pad','bass','drums'],pat:'push',s:[['Verse','D D C G'],['Chorus','D C G G']]},
+  {t:'Counting Stars',a:'OneRepublic',g:'Pop',k:[1,1],bpm:122,band:['acoustic','bass','drums'],pat:'folk',s:[['Verse','C#m E B A'],['Chorus','C#m E B A']]},
+  {t:'Love Story',a:'Taylor Swift',g:'Pop',k:[2,0],bpm:119,band:['acoustic','bass','drums'],pat:'pop',s:[['Verse','D A Bm G D A Bm G'],['Chorus','D A Bm G D A Bm G']]},
+  {t:'Firework',a:'Katy Perry',g:'Pop',k:[8,0],bpm:124,band:['piano','strings','bass','drums'],pat:'rock8',s:[['Verse','Ab Bbm Fm Db'],['Chorus','Ab Bbm Fm Db']]},
+  {t:'Demons',a:'Imagine Dragons',g:'Pop',k:[3,0],bpm:90,band:['piano','bass','drums'],pat:'quarters',s:[['Verse','Eb Bb Cm Ab'],['Chorus','Eb Bb Cm Ab']]},
+  {t:'Riptide',a:'Vance Joy',g:'Pop',k:[9,1],bpm:102,band:['uke','bass'],pat:'pop',s:[['Verse','Am G C C Am G C C'],['Chorus','Am G C C Am G C C']]},
+  {t:'Hey, Soul Sister',a:'Train',g:'Pop',k:[4,0],bpm:97,band:['uke','bass','drums'],pat:'pop',s:[['Verse','E B C#m A E B C#m A'],['Chorus','E B C#m A E B C#m A']]},
+  {t:'Somewhere Over the Rainbow',a:"Israel Kamakawiwo'ole",g:'Pop',k:[0,0],bpm:81,band:['uke'],pat:'pop',s:[['Verse','C Em Am F C G Am F']]},
+  {t:"I'm Yours",a:'Jason Mraz',g:'Pop',k:[0,0],bpm:75,band:['acoustic','bass','drums'],pat:'island',s:[['Verse','C G Am F C G Am F'],['Chorus','C G Am F C G Am F']]},
+  {t:'Chasing Cars',a:'Snow Patrol',g:'Pop',k:[9,0],bpm:104,band:['electric','bass','drums'],pat:'rock8',s:[['Verse','A E D D A E D D'],['Chorus','A E D D A E D D']]},
+  {t:'Viva la Vida',a:'Coldplay',g:'Pop',k:[8,0],bpm:138,band:['strings','bass','drums'],pat:'rock8',s:[['Verse','Db Eb Ab Fm Db Eb Ab Fm'],['Chorus','Db Eb Ab Fm Db Eb Ab Fm']]},
+  {t:'The Scientist',a:'Coldplay',g:'Pop',k:[5,0],bpm:74,band:['piano'],pat:'rock8',s:[['Verse','Dm Bb F F Dm Bb F F'],['Chorus','Bb F F C Bb F F C']]},
+  {t:'Yellow',a:'Coldplay',g:'Pop',k:[11,0],bpm:87,band:['electric','bass','drums'],pat:'pop',s:[['Verse','B F# E E B F# E E'],['Chorus','B F# E E B F# E E']]},
+  {t:'Fix You',a:'Coldplay',g:'Pop',k:[3,0],bpm:69,band:['organ','piano'],pat:'rock8',s:[['Verse','Eb Gm Cm Bb Eb Gm Cm Bb']]},
+  {t:'Hallelujah',a:'Leonard Cohen / Jeff Buckley',g:'Pop',k:[0,0],bpm:60,m:'6/8',band:['electric'],pat:'six8pick',s:[['Verse','C Am C Am F G C G'],['Pre-Chorus','C F G Am F G E Am'],['Chorus','F Am F C G C G C']]},
+  {t:'Fallin\'',a:'Alicia Keys',g:'Soul & R&B',k:[4,1],bpm:55,m:'12/8',band:['piano','strings'],pat:'t8soul',s:[['Verse','Em Bm Em Bm'],['Chorus','Em Bm Em Bm']]},
+  // ---- Soul & R&B
+  {t:'At Last',a:'Etta James',g:'Soul & R&B',k:[5,0],bpm:58,m:'12/8',band:['piano','strings','bass'],pat:'t8soul',s:[['Verse','F Dm Gm C F Dm Gm C']]},
+  {t:'When a Man Loves a Woman',a:'Percy Sledge',g:'Soul & R&B',k:[0,0],bpm:52,m:'12/8',band:['organ','bass','drums'],pat:'t8soul',s:[['Verse','C G Am F C G C G']]},
+  {t:'Tennessee Whiskey',a:'Chris Stapleton',g:'Soul & R&B',k:[9,0],bpm:120,m:'3/4',band:['electric','organ','bass','drums'],pat:'sway',s:[['Verse','A A Bm Bm A A Bm Bm'],['Chorus','A A Bm Bm A A Bm Bm']]},
+  {t:'Unchained Melody',a:'The Righteous Brothers',g:'Soul & R&B',k:[0,0],bpm:52,m:'6/8',band:['piano','strings'],pat:'six8pick',s:[['Verse','C Am F G C Am G G']]},
+  {t:'Stay With Me',a:'Sam Smith',g:'Soul & R&B',k:[0,0],bpm:84,band:['piano','organ','bass','drums'],pat:'quarters',s:[['Verse','Am F C C Am F C C'],['Chorus','Am F C C Am F C C']]},
+  {t:'Stand By Me',a:'Ben E. King',g:'Soul & R&B',k:[7,0],bpm:118,band:['bass','acoustic','strings','drums'],pat:'quarters',s:[['Verse','G G Em Em C D G G'],['Chorus','G G Em Em C D G G']]},
+  {t:"Ain't No Sunshine",a:'Bill Withers',g:'Soul & R&B',k:[9,1],bpm:79,band:['electric','strings','bass','drums'],pat:'pick',s:[['Verse','Am Em G Am Am Em G Am']]},
+  {t:'Lean on Me',a:'Bill Withers',g:'Soul & R&B',k:[0,0],bpm:76,band:['piano','bass','drums'],pat:'quarters',s:[['Verse','C F C G C F C G'],['Chorus','C F C G C F C G']]},
+  {t:"(Sittin' On) The Dock of the Bay",a:'Otis Redding',g:'Soul & R&B',k:[7,0],bpm:104,band:['electric','bass','drums'],pat:'pop',s:[['Verse','G B C A G B C A'],['Chorus','G E G E G A G E']]},
+  {t:'My Girl',a:'The Temptations',g:'Soul & R&B',k:[0,0],bpm:104,band:['electric','bass','drums'],pat:'quarters',s:[['Verse','C F C F C F C F'],['Chorus','Dm G Dm G']]},
+  {t:"Let's Get It On",a:'Marvin Gaye',g:'Soul & R&B',k:[3,0],bpm:82,band:['electric','bass','drums'],pat:'strum16',s:[['Verse','Eb Gm Ab Bb Eb Gm Ab Bb']]},
+  {t:"Isn't She Lovely",a:'Stevie Wonder',g:'Soul & R&B',k:[1,1],bpm:119,band:['epiano','bass','drums'],pat:'push',s:[['Verse','C#m F#7 B7 E'],['Chorus','C#m F#7 B7 E']]},
+  {t:'No One',a:'Alicia Keys',g:'Soul & R&B',k:[4,0],bpm:90,band:['piano','bass','drums'],pat:'rock8',s:[['Verse','E B C#m A E B C#m A'],['Chorus','E B C#m A E B C#m A']]},
+  {t:'I Will Always Love You',a:'Whitney Houston',g:'Soul & R&B',k:[9,0],bpm:67,band:['piano','strings'],pat:'pick16',s:[['Verse','A F#m D E A F#m D E'],['Chorus','A F#m D E A F#m D E']]},
+  {t:'Valerie',a:'Amy Winehouse',g:'Soul & R&B',k:[3,0],bpm:106,band:['organ','electric','bass','drums'],pat:'push',s:[['Verse','Eb Fm Eb Fm'],['Chorus','Ab Gm Ab Gm Ab Gm Fm Bb']]},
+  {t:'No Woman, No Cry',a:'Bob Marley',g:'Soul & R&B',k:[0,0],bpm:78,band:['organ','electric','bass','drums'],pat:'island',s:[['Verse','C G Am F C F C G'],['Chorus','C G Am F C F C G']]},
+  // ---- Rock
+  {t:"Don't Stop Believin'",a:'Journey',g:'Rock',k:[4,0],bpm:119,band:['piano','bass','drums'],pat:'rock8',s:[['Verse','E B C#m A E B G#m A'],['Chorus','E B C#m A E B G#m A']]},
+  {t:'Creep',a:'Radiohead',g:'Rock',k:[7,0],bpm:92,band:['electric','bass','drums'],pat:'quarters',s:[['Verse','G B C Cm G B C Cm'],['Chorus','G B C Cm G B C Cm']]},
+  {t:'Smells Like Teen Spirit',a:'Nirvana',g:'Rock',k:[5,1],bpm:117,band:['rock','bass','drums'],pat:'rock8',s:[['Verse','F Bb Ab Db F Bb Ab Db'],['Chorus','F Bb Ab Db F Bb Ab Db']]},
+  {t:'Zombie',a:'The Cranberries',g:'Rock',k:[4,1],bpm:84,band:['rock','bass','drums'],pat:'rock8',s:[['Verse','Em C G D Em C G D'],['Chorus','Em C G D Em C G D']]},
+  {t:'Wonderwall',a:'Oasis',g:'Rock',k:[4,1],bpm:87,band:['acoustic','bass','drums'],pat:'strum16',s:[['Verse','Em G D A Em G D A'],['Pre-Chorus','C D Em Em C D A A'],['Chorus','C Em G Em C Em G Em']]},
+  {t:'Sweet Home Alabama',a:'Lynyrd Skynyrd',g:'Rock',k:[2,0],bpm:98,band:['electric','bass','drums'],pat:'folk',s:[['Verse','D C G G D C G G']]},
+  {t:'Hotel California',a:'Eagles',g:'Rock',k:[11,1],bpm:75,band:['acoustic','electric','bass','drums'],pat:'pick16',s:[['Verse','Bm F# A E G D Em F#'],['Chorus','G D F# Bm G D Em F#']]},
+  {t:'Good Riddance (Time of Your Life)',a:'Green Day',g:'Rock',k:[7,0],bpm:95,band:['acoustic'],pat:'folk',s:[['Verse','G C D D G C D D'],['Chorus','Em D C G Em D C G']]},
+  {t:'Boulevard of Broken Dreams',a:'Green Day',g:'Rock',k:[5,1],bpm:83,band:['rock','bass','drums'],pat:'rock8',s:[['Verse','Fm Ab Eb Bb Fm Ab Eb Bb']]},
+  {t:'Have You Ever Seen the Rain',a:'Creedence Clearwater Revival',g:'Rock',k:[0,0],bpm:116,band:['acoustic','electric','bass','drums'],pat:'folk',s:[['Verse','C C G C C C G C'],['Chorus','F G C Am F G C C']]},
+  {t:'Bad Moon Rising',a:'Creedence Clearwater Revival',g:'Rock',k:[2,0],bpm:179,band:['electric','bass','drums'],pat:'quarters',s:[['Verse','D A G D D A G D'],['Chorus','G G D D A G D D']]},
+  {t:'Every Breath You Take',a:'The Police',g:'Rock',k:[7,0],bpm:117,band:['electric','bass','drums'],pat:'pick',s:[['Verse','G G Em Em C D G G']]},
+  {t:'Wonderful Tonight',a:'Eric Clapton',g:'Rock',k:[7,0],bpm:96,band:['electric','bass','drums'],pat:'pop',s:[['Verse','G D C D G D C D']]},
+  {t:"Knockin' on Heaven's Door",a:'Bob Dylan',g:'Rock',k:[7,0],bpm:69,band:['acoustic','organ','bass'],pat:'strum16',s:[['Verse','G D Am Am G D C C'],['Chorus','G D Am Am G D C C']]},
+  {t:'Brown Eyed Girl',a:'Van Morrison',g:'Rock',k:[7,0],bpm:150,band:['electric','bass','drums'],pat:'folk',s:[['Intro','G C G D'],['Verse','G C G D G C G D'],['Pre-Chorus','C D G Em C D G D'],['Chorus','G C G D G C G D']]},
+  {t:'Twist and Shout',a:'The Beatles',g:'Rock',k:[2,0],bpm:125,band:['electric','bass','drums'],pat:'folk',s:[['Verse','D G A A D G A A']]},
+  {t:'La Bamba',a:'Ritchie Valens',g:'Rock',k:[0,0],bpm:145,band:['electric','bass','drums'],pat:'folk',s:[['Verse','C F G G C F G G']]},
+  {t:'Everybody Hurts',a:'R.E.M.',g:'Rock',k:[2,0],bpm:52,m:'12/8',band:['electric','strings'],pat:'t8pick',s:[['Verse','D G D G'],['Chorus','D G D G']]},
+  // ---- Country & Folk
+  {t:'Take Me Home, Country Roads',a:'John Denver',g:'Country & Folk',k:[7,0],bpm:82,band:['acoustic','bass'],pat:'folk',s:[['Verse','G Em D C G D C G'],['Chorus','G D Em C G D C G'],['Bridge','Em D G G C G D D']]},
+  {t:'Leaving on a Jet Plane',a:'John Denver',g:'Country & Folk',k:[7,0],bpm:96,band:['acoustic'],pat:'pick16',s:[['Verse','G C G C G C D D'],['Chorus','G C G C G C D D']]},
+  {t:'Wagon Wheel',a:'Old Crow Medicine Show',g:'Country & Folk',k:[7,0],bpm:146,band:['acoustic','bass','drums'],pat:'folk',s:[['Verse','G D Em C G D C C'],['Chorus','G D Em C G D C C']]},
+  {t:'Jolene',a:'Dolly Parton',g:'Country & Folk',k:[1,1],bpm:110,band:['acoustic','bass'],pat:'folk',s:[['Chorus','C#m E B C#m B G#m C#m C#m'],['Verse','C#m E B C#m B G#m C#m C#m']]},
+  {t:'Fast Car',a:'Tracy Chapman',g:'Country & Folk',k:[0,0],bpm:104,band:['acoustic','bass','drums'],pat:'pick16',s:[['Verse','Cmaj7 G Em D Cmaj7 G Em D']]},
+  {t:'A Horse with No Name',a:'America',g:'Country & Folk',k:[4,1],bpm:122,band:['acoustic','bass'],pat:'folk',s:[['Verse','Em D Em D Em D Em D'],['Chorus','Em D Em D Em D Em D']]},
+  {t:'Hey There Delilah',a:"Plain White T's",g:'Country & Folk',k:[2,0],bpm:104,band:['acoustic'],pat:'pick',s:[['Verse','D F#m D F#m Bm A G A']]},
+  {t:"Blowin' in the Wind",a:'Bob Dylan',g:'Country & Folk',k:[2,0],bpm:88,band:['acoustic'],pat:'folk',s:[['Verse','D G D Bm D G A A']]},
+  {t:"The Times They Are A-Changin'",a:'Bob Dylan',g:'Country & Folk',k:[7,0],bpm:96,m:'3/4',band:['acoustic'],pat:'waltzStrum',s:[['Verse','G Em C G G Am C D']]},
+  {t:'House of the Rising Sun',a:'The Animals',g:'Country & Folk',k:[9,1],bpm:80,m:'6/8',band:['electric','organ'],pat:'six8pick',s:[['Verse','Am C D F Am C E E'],['Verse','Am C D F Am E Am E']]},
+  {t:'Norwegian Wood',a:'The Beatles',g:'Country & Folk',k:[2,0],bpm:60,m:'6/8',band:['acoustic'],pat:'six8strum',s:[['Verse','D D C D'],['Bridge','Dm Dm G G Dm Dm Em A']]},
+  // ---- Classics
+  {t:'Let It Be',a:'The Beatles',g:'Classics',k:[0,0],bpm:72,band:['piano','organ','bass'],pat:'rock8',s:[['Verse','C G Am F C G F C'],['Chorus','Am G F C C G F C'],['Verse','C G Am F C G F C'],['Chorus','Am G F C C G F C']]},
+  {t:'Hey Jude',a:'The Beatles',g:'Classics',k:[5,0],bpm:74,band:['piano','bass'],pat:'rock8',s:[['Verse','F C C7 F Bb F C F'],['Verse','F C C7 F Bb F C F'],['Outro','F Eb Bb F F Eb Bb F']]},
+  {t:'Imagine',a:'John Lennon',g:'Classics',k:[0,0],bpm:76,band:['piano','bass'],pat:'rock8',s:[['Verse','C Cmaj7 F F C Cmaj7 F F'],['Pre-Chorus','F Am Dm F G G G7 G7'],['Chorus','F G C E7 F G C E7']]},
+  {t:"Can't Help Falling in Love",a:'Elvis Presley',g:'Classics',k:[0,0],bpm:50,m:'6/8',band:['piano','strings'],pat:'six8pick',s:[['Verse','C Em Am Am F C G G'],['Verse','F G Am F C G C C'],['Bridge','Em B7 Em B7 Em A7 Dm G']]},
+  {t:'Piano Man',a:'Billy Joel',g:'Classics',k:[0,0],bpm:180,m:'3/4',band:['piano','bass'],pat:'waltz',s:[['Verse','C G Am C F C D G'],['Verse','C G Am C F G C C']]},
+  {t:'Edelweiss',a:'The Sound of Music',g:'Classics',k:[0,0],bpm:100,m:'3/4',band:['piano','strings'],pat:'waltz',s:[['Verse','C G C F C Am D G'],['Bridge','G G C C F F D G']]},
+  {t:'Amazing Grace',a:'Traditional',g:'Classics',k:[7,0],bpm:90,m:'3/4',band:['piano','organ'],pat:'waltzPick',s:[['Verse','G G C G G G D D G G C G G D G G']]},
+  {t:'Happy Birthday',a:'Traditional',g:'Classics',k:[0,0],bpm:120,m:'3/4',band:['piano'],pat:'waltz',s:[['Verse','C G G C C F C G C C']]},
 ];
+const GENRES=['All','Pop','Soul & R&B','Rock','Country & Folk','Classics','3/4 · 6/8 · 12/8'];
 function renderLibrary(){
-  const q=($('#libSearch').value||'').trim().toLowerCase();
-  const list=SONGS.map((x,i)=>({...x,i})).filter(x=>!q||(x.t+' '+x.a).toLowerCase().includes(q));
-  $('#libList').innerHTML=list.length?list.map(x=>`<button class="lib-item" data-act="load-song" data-song="${x.i}"><b>${esc(x.t)}</b><span>${esc(x.a)} · ${x.band.map(id=>instById(id).name).join(' + ')} · ${esc(getPattern(x.pat).name)}</span><em>${esc(x.k[1]?MIN_KEYS[x.k[0]]+'m':MAJ_KEYS[x.k[0]])}</em></button>`).join('')
+  const q=($('#libSearch').value||'').trim().toLowerCase(), g=ui.libGenre||'All';
+  $('#libGenres').innerHTML=GENRES.map(x=>`<button class="toggle" data-act="lib-genre" data-genre="${esc(x)}" aria-pressed="${g===x}">${esc(x)}</button>`).join('');
+  const list=SONGS.map((x,i)=>({...x,i,m:x.m||'4/4'}))
+    .filter(x=>g==='All'||(g==='3/4 · 6/8 · 12/8'?x.m!=='4/4':x.g===g))
+    .filter(x=>!q||(x.t+' '+x.a+' '+x.g).toLowerCase().includes(q))
+    .sort((a,b)=>a.t.localeCompare(b.t));
+  $('#libCount').textContent=`${list.length} song${list.length===1?'':'s'}`;
+  $('#libList').innerHTML=list.length?list.map(x=>`<button class="lib-item" data-act="load-song" data-song="${x.i}"><b>${esc(x.t)}</b><span>${esc(x.a)} · ${x.band.map(id=>instById(id).name).join(' + ')} · ${esc(getPattern(x.pat).name)}</span><em>${esc(x.k[1]?MIN_KEYS[x.k[0]]+'m':MAJ_KEYS[x.k[0]])}${x.m!=='4/4'?' · '+x.m:''}</em></button>`).join('')
     :`<p class="note">No match in the list yet. Ask me in chat for "${esc(q)}" and I'll add it.</p>`;
 }
 function loadSong(i){
   const x=SONGS[i]; if(!x) return; stopPlay();
-  const snap=JSON.stringify({sections:state.sections,key:state.key,tempo:state.tempo,example:state.example,band:state.band,pattern:state.pattern});
+  const snap=JSON.stringify({sections:state.sections,key:state.key,tempo:state.tempo,example:state.example,band:state.band,pattern:state.pattern,meter:state.meter});
   state.sections=x.s.map(([type,ch])=>({id:newId(),type,bars:ch.split(' ')}));
-  state.key={tonic:x.k[0],minor:!!x.k[1]}; state.tempo=x.bpm; state.band=[...x.band]; state.pattern=x.pat; state.example=false; save(); applyBand(); renderStrum();
+  state.key={tonic:x.k[0],minor:!!x.k[1]}; state.tempo=x.bpm; state.meter=x.m||'4/4'; state.band=[...x.band]; state.pattern=x.pat; state.example=false; ui.builder=false; save(); applyBand(); renderMeter(); renderStrum();
   $('#tempoOut').textContent=state.tempo; renderKeySel(); renderSong(); renderPalette(); renderVoiceStats(); voice.dirty=true;
   $('#library').open=false; window.scrollTo({top:0,behavior:'smooth'});
-  toast(`Loaded "${x.t}": ${x.band.map(id=>instById(id).name).join(' + ')}, ${getPattern(x.pat).name}.`,'Undo',()=>{ Object.assign(state,JSON.parse(snap)); save(); applyBand(); $('#tempoOut').textContent=state.tempo; renderKeySel(); renderSong(); renderPalette(); renderStrum(); });
+  toast(`Loaded "${x.t}" · ${x.m||'4/4'} · ${x.bpm} BPM · ${x.band.map(id=>instById(id).name).join(' + ')}.`,'Undo',()=>{ Object.assign(state,JSON.parse(snap)); save(); applyBand(); renderMeter(); $('#tempoOut').textContent=state.tempo; renderKeySel(); renderSong(); renderPalette(); renderStrum(); });
 }
 $('#libSearch').addEventListener('input',renderLibrary);
 
@@ -1510,7 +1635,8 @@ async function startStageRecord(){
   } else stageMsg("The mic is blocked on this page, so this is sing-along only. Open your GitHub link in Safari to record.",7000);
   const recStart=ctx.currentTime, ci=stage.countIn?stage.bd:0;
   stage.T0=ctx.currentTime+0.25+ci; stage.off=stage.T0-recStart;
-  if(ci) for(let i=0;i<4;i++) clickAt(stage.T0-ci+i*ci/4,i===0);
+  const cn=state.meter==='6/8'?6:meterOf().beats; stage.ciN=cn;
+  if(ci) for(let i=0;i<cn;i++) clickAt(stage.T0-ci+i*ci/cn,i===0);
   startPlay(null,stage.T0);
   stage.mode='rec'; updStageButtons(); wakeLock(true);
 }
@@ -1652,7 +1778,7 @@ function drawStage(){
   }
   // header text
   const ci=$('#countIn');
-  if(stage.mode==='rec'&&now<0){ ci.hidden=false; ci.textContent=String(Math.min(4,Math.ceil(-now/(bd/4)))); } else ci.hidden=true;
+  if(stage.mode==='rec'&&now<0){ ci.hidden=false; ci.textContent=String(Math.min(stage.ciN||4,Math.ceil(-now/(bd/(stage.ciN||4))))); } else ci.hidden=true;
   const it=timelineAt(Math.max(0,cur)), nx=timelineAt(Math.max(0,cur)+1), sec=it&&secById(it.sec);
   if(it&&sec){
     setText('shSec',`<span style="color:var(--c-${secColor(sec.type)})">${esc(sectionLabel(sec))}</span>`);
@@ -1669,7 +1795,7 @@ function drawStage(){
 /* ---------- boot ---------- */
 function renderAll(){
   $('#tempoOut').textContent=state.tempo; $('#loopBtn').setAttribute('aria-pressed',state.loop); $('#clickBtn').setAttribute('aria-pressed',state.click);
-  ui.builder=false; renderKeySel(); renderSong(); renderPalette(); renderKeyboard(); renderStrum(); renderVoice(); renderMixers(); renderLibrary(); applyMix();
+  ui.builder=false; renderMeter(); renderKeySel(); renderSong(); renderPalette(); renderKeyboard(); renderStrum(); renderVoice(); renderMixers(); renderLibrary(); applyMix();
 }
 makeExample(); renderAll(); setLit(parseChord('G').pcs);
 function syncTrayH(){ const tr=$('#tray'); const h=getComputedStyle(tr).display==='none'?0:tr.getBoundingClientRect().height; document.documentElement.style.setProperty('--tray-h',Math.round(h)+'px'); }

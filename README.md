@@ -11,6 +11,7 @@ Each version keeps its own link, so older ones never change:
 - **v2** (Nov 2026): adds the Sing with chords screen (record over the song; voice chart on top, chords lined up underneath): https://sergio-i1.github.io/song-builder/v2/
 - **v3** (Nov 2026): volume sliders for chords and voice, notched pitch sliders (one half step at a time), and a popular-songs list: https://sergio-i1.github.io/song-builder/v3/
 - **v4** (Nov 2026): 12 instruments you can layer, songs load their own instruments and strum, a drag-and-drop strum pattern builder, a custom chord bank, and gentler drag scrolling: https://sergio-i1.github.io/song-builder/v4/
+- **v5** (Nov 2026): time signatures (4/4, 3/4, 6/8, 12/8), busier strum and picking patterns for slow songs, and 83 popular songs with genre filters: https://sergio-i1.github.io/song-builder/v5/
 
 ## Also in this repo: Lecture Room
 
