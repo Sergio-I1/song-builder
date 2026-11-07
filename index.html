@@ -262,7 +262,7 @@ body.sheet-open .transport{position:static}
 .sheet-body{display:grid;gap:14px;padding-top:12px}
 .pk-now{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .pk-slot{min-width:92px;border:2px solid var(--line);border-radius:12px;background:var(--surface-2);padding:6px 12px 8px;font-family:var(--f-display);font-weight:800;font-size:1.45rem;line-height:1.1;display:inline-grid;justify-items:center;gap:2px;color:var(--ink)}
-.pk-slot small{font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pk-slot > small{font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .pk-slot[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
 .pk-hint{margin:0;font-size:.85rem;color:var(--muted)}
 .pk-group{display:grid;gap:7px}
@@ -287,6 +287,10 @@ body.sheet-open .transport{position:static}
 .pk-foot{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;position:sticky;bottom:0;z-index:2;background:var(--surface);padding:10px 0 12px;border-top:1px solid var(--line)}
 .pk-foot .btn{min-height:44px;padding:6px 2px;font-size:.84rem;white-space:nowrap}
 .bar.picking{outline:3px solid var(--accent);outline-offset:2px;border-style:solid}
+.feel-tag{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:.56rem;font-weight:800;letter-spacing:.07em;padding:1px 6px;border-radius:999px;background:var(--ink);color:var(--surface);pointer-events:none;white-space:nowrap}
+.feel-tag.auto{background:transparent;color:var(--ink);border:1px dashed var(--muted)}
+.bar.feel-quiet .chip{opacity:.4}
+.bar.has-feel{padding-bottom:18px}
 .bar-lyric.two{display:grid;grid-template-columns:1fr 1fr;gap:3px;-webkit-line-clamp:unset}
 .bar-lyric.two span{overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow-wrap:anywhere}
 /* band mode */
@@ -412,7 +416,7 @@ body.staged{overflow:hidden}
 
 <header class="transport">
   <div class="t-inner">
-    <span class="brand">Song Builder <small style="font-family:var(--f-mono);font-size:.7rem;font-weight:500;color:var(--muted)">v10</small></span>
+    <span class="brand">Song Builder <small style="font-family:var(--f-mono);font-size:.7rem;font-weight:500;color:var(--muted)">v11</small></span>
     <button id="playBtn" class="play" aria-pressed="false"><span id="playIcon">▶</span><span id="playText">Play song</span></button>
     <button id="loopBtn" class="toggle" aria-pressed="true">Loop</button>
     <button id="countBtn" class="toggle" aria-pressed="true" title="Drum sticks count you in before the song starts">Count-in</button>
@@ -461,6 +465,7 @@ body.staged{overflow:hidden}
           <div class="seg-big"><button data-act="arr-mode" data-on="0" aria-pressed="true">Just the chords</button><button data-act="arr-mode" data-on="1" aria-pressed="false">Like the record</button></div>
           <span class="note" id="arrNote"></span>
           <button class="btn" data-act="arr-reset" id="arrReset" hidden>Re-arrange every part</button>
+          <button class="toggle" data-act="auto-breaks" id="autoBreaksBtn" aria-pressed="true">Auto stops &amp; breaks</button>
         </div>
         <div class="banner" id="exampleBanner" hidden>
           <span>This is an example song so you can hear how it works. Change anything and it becomes yours.</span>
@@ -731,7 +736,7 @@ if(state.masterVol==null) state.masterVol=1.4; if(state.countInMain==null) state
 if(!state.songId) state.songId=newSongId();
 let saveT=null;
 function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{ localStorage.setItem(STORE,JSON.stringify(state)); }catch(e){} },200); }
-function edited(){ if(state.example){ state.example=false; $('#exampleBanner').hidden=true; } save(); if(state.trayMode==='song'&&!drag) renderTray(); }
+function edited(){ if(state.example){ state.example=false; $('#exampleBanner').hidden=true; } if(play) play.info={}; save(); if(state.trayMode==='song'&&!drag) renderTray(); }
 const ui={tab:'key',root:7,ctype:'',build:false,buildSel:new Set(),armed:null,lit:new Set(),builder:false,bSteps:null,bEditing:null,armedStroke:null};
 let uid=Date.now();
 const newId = () => 's'+(uid++).toString(36);
@@ -1174,16 +1179,47 @@ function tick(){
     if(change) uiQueue.push({t,sec:it.sec,idx:it.idx,chord:ch,half:split?half:null});
     if(state.click&&isBeatStep(play.step,L)) clickAt(t,play.step===0);
     let st=pat.steps[play.step]; if(mid&&st==='-') st='D';
-    const tonal=info.band.filter(x=>x!=='drums');
+    const feel=info.feel, hasDrums=info.band.includes('drums');
+    let tonal=info.band.filter(x=>x!=='drums'); if(feel==='drums') tonal=[]; else if(feel==='nolead') tonal=tonal.filter(x=>x!==info.lead);
     const vv=info.vel*(play.step===0?1:(change?0.92:(isBeatStep(play.step,L)?0.85:0.75)));
-    if(ch){ if(state.arrange) playRoles(ch,t,st,vv,change,play.step,L,remain*barDur()/L,tonal,info);
-      else playStep(ch,t,st,vv,change,play.step,false,L,remain*barDur()/L,tonal,info); }
-    if(info.band.includes('drums')) drumStep(t,play.step,L,info,busFor('drums'));
+    if(feel==='rest'){ /* silence */ }
+    else if(feel==='hit'||feel==='ring'){
+      if(ch&&(play.step===0||mid)){ const beat=barDur()/meterOf().beats, hold=feel==='ring'?remain*barDur()/L+1.2:beat*0.95;
+        tonal.forEach(id=>playInst(id,ch,t,'D',Math.min(1,info.vel+0.08),true,play.step,false,L,hold,{...info,energy:1}));
+        if(hasDrums){ const db=busFor('drums'); kickD(t,1,db); crashD(t,feel==='hit'?0.8:0.6,db); }
+        if(feel==='hit') tonal.forEach(id=>{ const P=id+':'; voices.forEach((v,k)=>{ if(k.startsWith(P)&&v.src&&v.src.buffer){ fadeVoice(v,t+beat*0.9); voices.delete(k); } }); }); }
+    }
+    else {
+      if(ch&&tonal.length){ if(state.arrange) playRoles(ch,t,st,vv,change,play.step,L,remain*barDur()/L,tonal,info);
+        else playStep(ch,t,st,vv,change,play.step,false,L,remain*barDur()/L,tonal,info); }
+      if(hasDrums) drumStep(t,play.step,L,info,busFor('drums'));
+    }
     play.next+=stepDur(L); play.step++;
     if(play.step>=L){ play.step=0; play.bar++;
       if(play.bar>=play.seq.length){ if(state.loop&&!play.noLoop) play.bar=0; else { play.endAt=play.next+0.6; break; } } }
   }
 }
+/* ---------- stops, rests and breaks ---------- */
+const FEELS=[['normal','Normal','Plays like the rest of the part'],['hit','Hit & stop','Everyone hits beat 1 together, then silence'],
+  ['ring','Let it ring','One strum on beat 1 that rings out'],['drums','Drums only','The chords drop out, the drums keep going'],
+  ['nolead','No main instrument','Bass and drums carry it (a breakdown)'],['rest','Rest','Total silence for the bar']];
+const FEEL_TAG={hit:'STOP',ring:'RING',drums:'DRUMS',nolead:'BREAK',rest:'REST'};
+/* where songs usually breathe: a stop before the first chorus, a drum build (or a stop in ballads) before the last chorus,
+   a bass-and-drums breakdown at the start of a bridge, and the last chord ringing out at the very end */
+function autoFeel(j,i){
+  if(state.autoBreaks===false) return null; const S=state.sections, sec=S[j]; if(!sec) return null;
+  const last=i===sec.bars.length-1, nx=S[j+1];
+  if(!nx&&last) return 'ring';
+  if(last&&nx&&nx.type==='Chorus'&&sec.type!=='Chorus'){
+    const firstC=S.findIndex(x=>x.type==='Chorus'), lastC=S.map(x=>x.type).lastIndexOf('Chorus');
+    if(j+1===firstC) return 'hit';
+    if(j+1===lastC&&lastC!==firstC){ const st=arrangeStyle({...songMetaNow(),rec:bandOrder()}); return state.band.includes('drums')&&st!=='ballad'&&st!=='solo'?'drums':'hit'; }
+  }
+  if(state.arrange&&sec.type==='Bridge'&&i<(sec.bars.length>4?2:1)){ const b=effBand(sec); if(b.some(x=>ROLE[x]==='bass'||x==='drums')&&b.some(x=>ROLE[x]==='rhythm'||ROLE[x]==='keys')) return 'nolead'; }
+  return null;
+}
+function barFeel(sec,i){ const own=sec.feel&&sec.feel[i]; if(own) return {f:own==='normal'?null:own,auto:false};
+  const a=autoFeel(state.sections.indexOf(sec),i); return {f:a,auto:!!a}; }
 /* ---------- Like the record: each part gets its own instruments and energy ---------- */
 const ROLE={acoustic:'rhythm',nylon:'rhythm',electric:'rhythm',rock:'rhythm',uke:'rhythm',piano:'keys',epiano:'keys',marimba:'keys',organ:'pad',strings:'pad',pad:'pad',bass:'bass',drums:'drums'};
 const ENERGY_NAMES=['Off','Soft','Medium','Full'];
@@ -1199,7 +1235,8 @@ function barInfo(i){
   const last=!!sec&&it.idx===sec.bars.length-1, ne=nsec?(usesArr(nsec)?(nsec.energy==null?2:nsec.energy):2):0;
   const band=effBand(sec), tonal=band.filter(x=>x!=='drums'), order=bandOrder().filter(x=>tonal.includes(x));
   const lead=leadOf(order.length?order:tonal);
-  return play.info[i]={energy:e,first:it.idx===0,last,fill:last&&!!nsec&&ne>=e&&effBand(nsec).includes('drums'),band,lead,pat:patForBar(play.seq,i),vel:[0.7,0.8,0.92,1][e]};
+  const feel=sec?barFeel(sec,it.idx).f:null;
+  return play.info[i]={energy:e,first:it.idx===0,last,fill:last&&!!nsec&&ne>=e&&effBand(nsec).includes('drums')&&!['hit','ring','rest'].includes(feel),band,lead,feel,pat:patForBar(play.seq,i),vel:[0.7,0.8,0.92,1][e]};
 }
 function arrangeStyle(meta){ if(meta.st) return meta.st; if((meta.rec||[]).length<=1) return 'solo'; return (meta.compound?meta.bpm<=66:meta.bpm<=84)?'ballad':'band'; }
 const LEVELS={ballad:{I:1,V:[1,2,2],P:[2,3],C:[2,3,4],B:3,S:3,O:1},band:{I:2,V:[2,3,3],P:[3,3],C:[4,4,4],B:2,S:4,O:2},
@@ -1240,7 +1277,7 @@ function setArrange(on){
 function renderArrangeMode(){
   document.querySelectorAll('[data-act="arr-mode"]').forEach(b=>b.setAttribute('aria-pressed',String(!!state.arrange===(b.dataset.on==='1'))));
   $('#arrNote').textContent=state.arrange?'The full band, like the recording: each part has its own instruments and it builds up to the last chorus. Tap the line under a part to change it.':'Simple: one instrument plays your chords. Add more in Sound if you want.';
-  $('#arrReset').hidden=!state.arrange;
+  $('#arrReset').hidden=!state.arrange; $('#autoBreaksBtn').setAttribute('aria-pressed',String(state.autoBreaks!==false));
 }
 const shortName = id => ({acoustic:'Acoustic',nylon:'Nylon',electric:'Electric',rock:'Rock gtr',uke:'Uke',piano:'Piano',epiano:'E-piano',marimba:'Marimba',organ:'Organ',strings:'Strings',pad:'Pad',bass:'Bass',drums:'Drums'}[id]||id);
 function arrHtml(s){
@@ -1282,8 +1319,9 @@ function barHtml(s,ch,i){
   const ly=(state.showLyrics||ui.editLyrics)?(two?`<span class="bar-lyric two"><span>${esc(lp[0])||'&nbsp;'}</span><span>${esc(lp[1])||'&nbsp;'}</span></span>`
     :`<span class="bar-lyric${lyricOf(s,i)?'':' empty'}">${esc(lyricOf(s,i))||'&nbsp;'}</span>`):'';
   const btn=`<button class="split-btn" data-act="split" data-sec="${s.id}" data-idx="${i}" aria-pressed="${split}" title="${split?'One chord in this bar':'Two chords in this bar'}" aria-label="${split?'Make this one chord':'Split into two chords'}">½</button>`;
-  if(!split) return `<div class="bar${filled?' filled':''}${ly?' has-lyric':''}" data-drop="bar" data-sec="${s.id}" data-idx="${i}"><span class="bar-num">${i+1}</span>${btn}${ly}${filled?barChip(s,i,ch,null):'<span class="bar-empty">tap to add</span>'}</div>`;
-  return `<div class="bar split${filled?' filled':''}${ly?' has-lyric':''}" data-sec="${s.id}" data-idx="${i}"><span class="bar-num">${i+1}</span>${btn}${ly}${parts.map((c,h)=>`<div class="half" data-drop="bar" data-sec="${s.id}" data-idx="${i}" data-half="${h}">${realChord(c)?barChip(s,i,c,h):'<span class="bar-empty">·</span>'}</div>`).join('')}</div>`;
+  const fe=barFeel(s,i), tag=fe.f?`<span class="feel-tag f-${fe.f}${fe.auto?' auto':''}" title="${esc(FEELS.find(x=>x[0]===fe.f)[2])}${fe.auto?' (added automatically)':''}">${FEEL_TAG[fe.f]}</span>`:'', fq=fe.f==='rest'||fe.f==='drums'?' feel-quiet':'';
+  if(!split) return `<div class="bar${filled?' filled':''}${ly?' has-lyric':''}${fq}${tag?' has-feel':''}" data-drop="bar" data-sec="${s.id}" data-idx="${i}"><span class="bar-num">${i+1}</span>${btn}${tag}${ly}${filled?barChip(s,i,ch,null):'<span class="bar-empty">tap to add</span>'}</div>`;
+  return `<div class="bar split${filled?' filled':''}${ly?' has-lyric':''}${fq}${tag?' has-feel':''}" data-sec="${s.id}" data-idx="${i}"><span class="bar-num">${i+1}</span>${btn}${tag}${ly}${parts.map((c,h)=>`<div class="half" data-drop="bar" data-sec="${s.id}" data-idx="${i}" data-half="${h}">${realChord(c)?barChip(s,i,c,h):'<span class="bar-empty">·</span>'}</div>`).join('')}</div>`;
 }
 function sectionLabel(s){ const same=state.sections.filter(x=>x.type===s.type); return same.length>1? s.type+' '+(same.indexOf(s)+1) : s.type; }
 const secColor = t => (SEC_TYPES.find(x=>x.t===t)||SEC_TYPES[1]).c;
@@ -1574,15 +1612,16 @@ function renderPicker(){
   if(split&&P.half==null) P.half=0; if(!split) P.half=null;
   const cur=realChord(split?parts[P.half]:parts[0]), raw=lyricRaw(sec,P.idx), lyParts=split?splitLy(raw):[lyricOf(sec,P.idx)];
   const chip=(c,sub)=>`<button class="pk-chip" data-act="pk-chord" data-chord="${esc(c)}" aria-pressed="${c===cur}"><span>${chordHtml(c)}</span>${sub?`<sub>${sub}</sub>`:''}</button>`;
-  const built=P.root!=null?spell(P.root)+P.type:null, inSong=songChords();
+  const built=P.root!=null?spell(P.root)+P.type:null, inSong=songChords(), feelNow=barFeel(sec,P.idx);
   $('#sheetTitle').textContent=`${sectionLabel(sec)} · bar ${P.idx+1}`;
   $('#sheetBody').innerHTML=`
-    <div class="pk-now">${split?parts.map((c,h)=>`<button class="pk-slot" data-act="pk-half" data-h="${h}" aria-pressed="${h===P.half}"><small>${h?'2nd half':'1st half'}</small>${realChord(c)?chordHtml(c):'—'}</button>`).join('')
-      :`<span class="pk-slot" aria-pressed="true"><small>This bar</small>${cur?chordHtml(cur):'—'}</span>`}
+    <div class="pk-now">${split?parts.map((c,h)=>`<button class="pk-slot" data-act="pk-half" data-h="${h}" aria-pressed="${h===P.half}"><small>${h?'2nd half':'1st half'}</small><span>${realChord(c)?chordHtml(c):'—'}</span></button>`).join('')
+      :`<span class="pk-slot" aria-pressed="true"><small>This bar</small><span>${cur?chordHtml(cur):'—'}</span></span>`}
       <button class="btn" data-act="pk-split">${split?'Make it one chord':'Two chords in this bar'}</button></div>
     <p class="pk-hint">${split?`Tap a chord for the <b>${P.half?'2nd':'1st'} half</b> of the bar.`:'Tap a chord to put it in this bar. You will hear it.'}</p>
     <div class="pk-ly"><span class="lbl">Words sung over this bar</span>${lyParts.map((v,h)=>`<input type="text" data-pkly="${h}" value="${esc(v)}" placeholder="${split?(h?'words over the 2nd chord':'words over the 1st chord'):'type the words sung here'}" aria-label="Words${split?(h?' over the 2nd chord':' over the 1st chord'):''}" autocomplete="off" enterkeyhint="next">`).join('')}
       <span class="note">Press Enter to go to the next bar.</span></div>
+    <div class="pk-group"><span class="lbl">How this bar plays${feelNow.auto?' · set automatically':''}</span><div class="pk-chips">${FEELS.filter(x=>x[0]!=='nolead'||state.arrange).map(([v,l])=>`<button class="pk-chip small" data-act="pk-feel" data-v="${v}" aria-pressed="${(feelNow.f||'normal')===v}">${l}</button>`).join('')}</div><span class="note">${esc((FEELS.find(x=>x[0]===(feelNow.f||'normal'))||FEELS[0])[2])}.</span></div>
     ${inSong.length?`<div class="pk-group"><span class="lbl">Already in this song</span><div class="pk-chips">${inSong.map(c=>chip(c)).join('')}</div></div>`:''}
     <div class="pk-group"><span class="lbl">Key of ${esc(keyName(state.key))}</span><div class="pk-chips">${diatonic().map(d=>chip(spell(d.pc)+d.s,d.num)).join('')}</div></div>
     <div class="pk-group"><span class="lbl">Any chord · pick a note, then a type</span>
@@ -1816,6 +1855,11 @@ function act(a){
     case 'pk-clear': if(!ui.pick) break; { const P=ui.pick, ps=secById(P.sec); setCell(ps,P.idx,P.half,P.half==null?'':'-'); edited(); renderSong(); renderPicker(); break; }
     case 'pk-play': if(!ui.pick) break; { const P=ui.pick; sheetClose(); jumpToBar(P.sec,P.idx); break; }
     case 'pk-move': pickMove(+a.dataset.d); break;
+    case 'pk-feel': { const P=ui.pick, ps=P&&secById(P.sec); if(!ps) break; ps.feel=ps.feel||[]; while(ps.feel.length<ps.bars.length) ps.feel.push(null);
+      const auto=autoFeel(state.sections.indexOf(ps),P.idx), v=a.dataset.v; ps.feel[P.idx]=(v==='normal'&&!auto)?null:(v===(auto||'')?null:v);
+      edited(); renderSong(); renderPicker(); break; }
+    case 'auto-breaks': state.autoBreaks=state.autoBreaks===false; edited(); renderSong(); renderArrangeMode();
+      toast(state.autoBreaks?'Stops and breaks added where songs usually breathe.':'Automatic stops and breaks off. Bars you set yourself stay.'); break;
     case 'paste-open': ui.pasteText=ui.pasteText||''; sheetOpen('paste'); break;
     case 'paste-bars': ui.pasteText=$('#pasteTa').value; ui.pasteBars=a.dataset.v; renderPasteOpts(); break;
     case 'paste-len': ui.pasteText=$('#pasteTa').value; ui.pasteLen=a.dataset.v; renderPasteOpts(); break;
